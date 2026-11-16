@@ -29,7 +29,7 @@ public class InitLootModifier {
         // Global Modifier
         LootTableEvents.MODIFY.register((resourceManager, lootManager, key, builder, source) -> {
                     // Add one P pool per eligible table even when a vanilla table is also listed.
-                    if ((key.getNamespace().equals("minecraft") && key.getPath().startsWith("chests/"))
+                    if ((key.getPath().startsWith("chests/") && (key.getNamespace().equals("minecraft") || MiscConfig.MODDED_POWER_CHESTS.get()))
                             || MiscConfig.EXTRA_POWER_CHESTS.get().contains(key.toString()))
                         builder.withPool(LootPool.lootPool().add(LootTableReference.lootTableReference(LootTableGenerator.CHEST_POWER_POINT)));
 

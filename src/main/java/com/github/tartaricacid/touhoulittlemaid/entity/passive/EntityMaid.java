@@ -249,7 +249,7 @@ public class EntityMaid extends TamableAnimal implements CrossbowAttackMob, IMai
     private static final String SCHEDULE_MODE_TAG = "MaidScheduleMode";
     private static final String BACKPACK_DATA_TAG = "MaidBackpackData";
     private static final String STRUCTURE_SPAWN_TAG = "StructureSpawn";
-    private static final String DEFAULT_MODEL_ID = "touhou_little_maid:hakurei_reimu";
+    public static final String DEFAULT_MODEL_ID = "touhou_little_maid:hakurei_reimu";
 
     // 弃用数据，仅用于旧版存档的迁移
     private static final @Deprecated String BACKPACK_LEVEL_TAG = "MaidBackpackLevel";

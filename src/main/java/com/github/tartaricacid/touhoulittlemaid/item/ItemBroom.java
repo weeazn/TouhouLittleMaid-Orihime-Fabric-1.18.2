@@ -14,7 +14,7 @@ import net.minecraft.world.entity.MobSpawnType;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.TooltipFlag;
-import net.minecraft.world.item.context.BlockPlaceContext;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.item.context.UseOnContext;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.AABB;
@@ -29,30 +29,38 @@ public class ItemBroom extends Item {
 
     @Override
     public InteractionResult useOn(UseOnContext context) {
-        if (context.getClickedFace() != Direction.DOWN) {
-            Level world = context.getLevel();
-            BlockPos clickedPos = new BlockPlaceContext(context).getClickedPos();
-            AABB boundingBox = EntityBroom.TYPE.getDimensions().makeBoundingBox(Vec3.atBottomCenterOf(clickedPos));
-            if (world.noCollision(boundingBox) && world.getEntities(null, boundingBox).isEmpty()) {
-                ItemStack stack = context.getItemInHand();
-                if (world instanceof ServerLevel serverWorld) {
-                    EntityBroom broom = EntityBroom.TYPE.create(serverWorld, stack.getTag(),
-                            stack.hasCustomHoverName() ? stack.getHoverName() : null, context.getPlayer(),
-                            context.getClickedPos(), MobSpawnType.SPAWN_EGG, true, true);
-                    if (broom == null) {
-                        return InteractionResult.FAIL;
-                    }
-                    if (context.getPlayer() != null) {
-                        broom.setOwnerUUID(context.getPlayer().getUUID());
-                    }
-                    world.addFreshEntity(broom);
-                    world.playSound(null, broom.getX(), broom.getY(), broom.getZ(), SoundEvents.WOOL_PLACE, SoundSource.BLOCKS, 0.75F, 0.8F);
-                }
-                stack.shrink(1);
-                return InteractionResult.sidedSuccess(world.isClientSide);
-            }
+        Direction face = context.getClickedFace();
+        if (face == Direction.DOWN) return InteractionResult.FAIL;
+
+        Level world = context.getLevel();
+        BlockPos block = context.getClickedPos();
+        var dimensions = EntityBroom.TYPE.getDimensions();
+        var player = context.getPlayer();
+        Vec3 placement;
+        if (face == Direction.UP) {
+            placement = new Vec3(block.getX() + 0.5, context.getClickLocation().y, block.getZ() + 0.5);
+        } else {
+            double offset = 0.5 + dimensions.width / 2.0;
+            placement = Vec3.atBottomCenterOf(block).add(face.getStepX() * offset, 0, face.getStepZ() * offset);
         }
-        return InteractionResult.FAIL;
+        AABB bounds = dimensions.makeBoundingBox(placement);
+        if (!world.noCollision(player, bounds) || !world.getEntities(player, bounds,
+                entity -> !entity.isSpectator() && (entity instanceof LivingEntity || entity.canBeCollidedWith())).isEmpty()) {
+            return InteractionResult.FAIL;
+        }
+        if (world instanceof ServerLevel serverWorld) {
+            ItemStack stack = context.getItemInHand();
+            Component customName = stack.hasCustomHoverName() ? stack.getHoverName() : null;
+            EntityBroom broom = EntityBroom.TYPE.create(serverWorld, stack.getTag(), customName, player,
+                    new BlockPos(placement), MobSpawnType.SPAWN_EGG, false, false);
+            if (broom == null) return InteractionResult.FAIL;
+            broom.moveTo(placement.x, placement.y, placement.z, player == null ? 0 : player.getYRot(), 0);
+            if (player != null) broom.setOwnerUUID(player.getUUID());
+            if (!world.addFreshEntity(broom)) return InteractionResult.FAIL;
+            if (player == null || !player.getAbilities().instabuild) stack.shrink(1);
+            world.playSound(null, placement.x, placement.y, placement.z, SoundEvents.WOOL_PLACE, SoundSource.BLOCKS, 0.75F, 0.8F);
+        }
+        return InteractionResult.sidedSuccess(world.isClientSide);
     }
 
     @Override

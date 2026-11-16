@@ -40,8 +40,8 @@ public final class DanmakuShoot {
                     .setDamage(damage).setGravityVelocity(gravity)
                     .setDanmakuType(type).setColor(color)
                     .setImpedingLevel(impedingLevel).setHurtEnderman(hurtEnderman);
-            float offset = 0.3f / target.getBbHeight();
-            danmaku.shoot(target.getX() - thrower.getX(), target.getY() - thrower.getY() - offset, target.getZ() - thrower.getZ(), velocity, inaccuracy);
+            Vec3 aim = target.getBoundingBox().getCenter().subtract(danmaku.position());
+            danmaku.shoot(aim.x, aim.y, aim.z, velocity, inaccuracy);
             world.addFreshEntity(danmaku);
         }
         world.playSound(null, thrower.getX(), thrower.getY(), thrower.getZ(), SoundEvents.SNOWBALL_THROW, thrower.getSoundSource(), 1.0f, 0.8f);
@@ -54,19 +54,17 @@ public final class DanmakuShoot {
         Preconditions.checkArgument(yawTotal >= 0 && yawTotal <= MAX_YAW, "yaw should >=0 and <= 2π");
         Preconditions.checkArgument(fanNum >= MIN_FAN_NUM, "fan number should >=2");
         if (!world.isClientSide) {
-            float offset = 0.3f / target.getBbHeight();
-            Vec3 v = new Vec3(target.getX() - thrower.getX(), target.getY() - thrower.getY() - offset, target.getZ() - thrower.getZ());
             double yaw = -(yawTotal / 2);
             double addYaw = yawTotal / (fanNum - 1);
             for (int i = 1; i <= fanNum; i++) {
-                Vec3 v1 = v.yRot((float) yaw);
-                yaw = yaw + addYaw;
 
                 EntityDanmaku danmaku = new EntityDanmaku(world, thrower)
                         .setDamage(damage).setGravityVelocity(gravity)
                         .setDanmakuType(type).setColor(color)
                         .setImpedingLevel(impedingLevel).setHurtEnderman(hurtEnderman);
-                danmaku.shoot(v1.x, v1.y, v1.z, velocity, inaccuracy);
+                Vec3 aim = target.getBoundingBox().getCenter().subtract(danmaku.position()).yRot((float) yaw);
+                yaw += addYaw;
+                danmaku.shoot(aim.x, aim.y, aim.z, velocity, inaccuracy);
                 world.addFreshEntity(danmaku);
             }
         }

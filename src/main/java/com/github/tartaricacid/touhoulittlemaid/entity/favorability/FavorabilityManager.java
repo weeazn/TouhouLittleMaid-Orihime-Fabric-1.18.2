@@ -7,6 +7,7 @@ import com.github.tartaricacid.touhoulittlemaid.init.InitTrigger;
 import com.github.tartaricacid.touhoulittlemaid.network.NetworkHandler;
 import com.github.tartaricacid.touhoulittlemaid.network.message.SpawnParticleMessage;
 import com.google.common.collect.Maps;
+import com.github.tartaricacid.touhoulittlemaid.config.ServerConfig;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.server.level.ServerPlayer;
@@ -29,15 +30,8 @@ public class FavorabilityManager {
     private static final int LEVEL_2 = 2;
     private static final int LEVEL_3 = 3;
 
-    private static final int LEVEL_0_POINT = 0;
-    private static final int LEVEL_1_POINT = 64;
-    private static final int LEVEL_2_POINT = 192;
-    private static final int LEVEL_3_POINT = 384;
-
-    private static final int LEVEL_0_HEALTH = 20;
-    private static final int LEVEL_1_HEALTH = 30;
-    private static final int LEVEL_2_HEALTH = 40;
-    private static final int LEVEL_3_HEALTH = 80;
+    private int appliedHealth = 20;
+    private int appliedAttack = 2;
 
     private static final int LEVEL_0_ATTACK_DAMAGE = 2;
     private static final int LEVEL_1_ATTACK_DAMAGE = 3;
@@ -65,6 +59,7 @@ public class FavorabilityManager {
     }
 
     public void tick() {
+        if (maid.tickCount % 20 == 0) updateAttributes(getLevel());
         counter.values().forEach(Time::tick);
     }
 
@@ -113,11 +108,11 @@ public class FavorabilityManager {
     }
 
     private int getLevel(int favorability) {
-        if (favorability < LEVEL_1_POINT) {
+        if (favorability < getPointByLevel(1)) {
             return LEVEL_0;
-        } else if (favorability < LEVEL_2_POINT) {
+        } else if (favorability < getPointByLevel(2)) {
             return LEVEL_1;
-        } else if (favorability < LEVEL_3_POINT) {
+        } else if (favorability < getPointByLevel(3)) {
             return LEVEL_2;
         } else {
             return LEVEL_3;
@@ -126,12 +121,12 @@ public class FavorabilityManager {
 
     public double getLevelPercent() {
         int favorability = this.maid.getFavorability();
-        if (favorability < LEVEL_1_POINT) {
-            return favorability / (double) LEVEL_1_POINT;
-        } else if (favorability < LEVEL_2_POINT) {
-            return (favorability - LEVEL_1_POINT) / (double) (LEVEL_2_POINT - LEVEL_1_POINT);
-        } else if (favorability < LEVEL_3_POINT) {
-            return (favorability - LEVEL_2_POINT) / (double) (LEVEL_3_POINT - LEVEL_2_POINT);
+        if (favorability < getPointByLevel(1)) {
+            return favorability / (double) getPointByLevel(1);
+        } else if (favorability < getPointByLevel(2)) {
+            return (favorability - getPointByLevel(1)) / (double) (getPointByLevel(2) - getPointByLevel(1));
+        } else if (favorability < getPointByLevel(3)) {
+            return (favorability - getPointByLevel(2)) / (double) (getPointByLevel(3) - getPointByLevel(2));
         } else {
             return 0;
         }
@@ -147,20 +142,9 @@ public class FavorabilityManager {
     }
 
     public int getHealthByLevel(int level) {
-        switch (level) {
-            case LEVEL_1 -> {
-                return LEVEL_1_HEALTH;
-            }
-            case LEVEL_2 -> {
-                return LEVEL_2_HEALTH;
-            }
-            case LEVEL_3 -> {
-                return LEVEL_3_HEALTH;
-            }
-            default -> {
-                return LEVEL_0_HEALTH;
-            }
-        }
+        int health = 20;
+        for (int i = 0; i < Math.min(level, LEVEL_3); i++) health += ServerConfig.FAVOR_HEALTH[i].get();
+        return health;
     }
 
     public int getAttackByLevel(int level) {
@@ -181,11 +165,11 @@ public class FavorabilityManager {
     }
 
     public int getAttackDistancePlusByPoint(int favorability) {
-        if (favorability < LEVEL_1_POINT) {
+        if (favorability < getPointByLevel(1)) {
             return LEVEL_0_ATTACK_DISTANCE_PLUS;
-        } else if (favorability < LEVEL_2_POINT) {
+        } else if (favorability < getPointByLevel(2)) {
             return LEVEL_1_ATTACK_DISTANCE_PLUS;
-        } else if (favorability < LEVEL_3_POINT) {
+        } else if (favorability < getPointByLevel(3)) {
             return LEVEL_2_ATTACK_DISTANCE_PLUS;
         } else {
             return LEVEL_3_ATTACK_DISTANCE_PLUS;
@@ -194,11 +178,11 @@ public class FavorabilityManager {
 
     public AABB getSweepRange(Entity target, int favorability) {
         AABB boundingBox = target.getBoundingBox();
-        if (favorability < LEVEL_1_POINT) {
+        if (favorability < getPointByLevel(1)) {
             return sweepRangeTransform(boundingBox, LEVEL_0_SWEEP_RANGE);
-        } else if (favorability < LEVEL_2_POINT) {
+        } else if (favorability < getPointByLevel(2)) {
             return sweepRangeTransform(boundingBox, LEVEL_1_SWEEP_RANGE);
-        } else if (favorability < LEVEL_3_POINT) {
+        } else if (favorability < getPointByLevel(3)) {
             return sweepRangeTransform(boundingBox, LEVEL_2_SWEEP_RANGE);
         } else {
             return sweepRangeTransform(boundingBox, LEVEL_3_SWEEP_RANGE);
@@ -210,49 +194,40 @@ public class FavorabilityManager {
     }
 
     public int getPointByLevel(int level) {
-        switch (level) {
-            case LEVEL_1 -> {
-                return LEVEL_1_POINT;
+        int points = 0;
+        for (int i = 0; i < Math.min(level, LEVEL_3); i++) points += ServerConfig.FAVOR_COST[i].get();
+        return points;
+    }
+
+    private void updateAttributes(int level) {
+        int health = getHealthByLevel(level);
+        int attack = getAttackByLevel(level);
+        if (health != appliedHealth) {
+            AttributeInstance attr = maid.getAttribute(Attributes.MAX_HEALTH);
+            if (attr != null) {
+                attr.setBaseValue(attr.getBaseValue() + health - appliedHealth);
+                if (maid.getHealth() > maid.getMaxHealth()) maid.setHealth(maid.getMaxHealth());
             }
-            case LEVEL_2 -> {
-                return LEVEL_2_POINT;
-            }
-            case LEVEL_3 -> {
-                return LEVEL_3_POINT;
-            }
-            default -> {
-                return LEVEL_0_POINT;
-            }
+            appliedHealth = health;
+        }
+        if (attack != appliedAttack) {
+            AttributeInstance attr = maid.getAttribute(Attributes.ATTACK_DAMAGE);
+            if (attr != null) attr.setBaseValue(attr.getBaseValue() + attack - appliedAttack);
+            appliedAttack = attack;
         }
     }
 
     public void add(int addPoint) {
         int favorability = maid.getFavorability();
         int levelBefore = getLevel();
-        int result = Mth.clamp(favorability + addPoint, 0, LEVEL_3_POINT);
+        int result = (int) Mth.clamp((long) favorability + addPoint, 0L, Math.max(getPointByLevel(3), favorability));
         maid.setFavorability(result);
         int levelAfter = getLevel();
 
         if (levelBefore < levelAfter) {
-            AttributeInstance attack = maid.getAttribute(Attributes.ATTACK_DAMAGE);
-            AttributeInstance health = maid.getAttribute(Attributes.MAX_HEALTH);
-
-            if (attack != null) {
-                attack.setBaseValue(this.getAttackByLevel(levelAfter));
-            }
-
-            if (health != null) {
-                if (maid.isStruckByLightning()) {
-                    health.setBaseValue(this.getHealthByLevel(levelAfter) + 20);
-                } else {
-                    health.setBaseValue(this.getHealthByLevel(levelAfter));
-                }
-                if (maid.getHealth() > maid.getMaxHealth()) {
-                    maid.setHealth(maid.getMaxHealth());
-                }
-                if (maid.getMaxHealth() >= 100 && maid.getOwner() instanceof ServerPlayer serverPlayer) {
-                    InitTrigger.MAID_EVENT.trigger(serverPlayer, TriggerType.MAID_100_HEALTHY);
-                }
+            updateAttributes(levelAfter);
+            if (maid.getMaxHealth() >= 100 && maid.getOwner() instanceof ServerPlayer owner) {
+                InitTrigger.MAID_EVENT.trigger(owner, TriggerType.MAID_100_HEALTHY);
             }
 
             if (maid.getOwner() instanceof ServerPlayer serverPlayer) {
@@ -271,35 +246,19 @@ public class FavorabilityManager {
     public void reduce(int reducePoint) {
         int favorability = maid.getFavorability();
         int pointByLevel = getPointByLevel(getLevel());
-        int result = Mth.clamp(favorability - reducePoint, pointByLevel, LEVEL_3_POINT);
+        int result = Mth.clamp(favorability - reducePoint, pointByLevel, getPointByLevel(3));
         maid.setFavorability(result);
     }
 
     public void reduceWithoutLevel(int reducePoint) {
         int favorability = maid.getFavorability();
         int levelBefore = getLevel();
-        int result = Mth.clamp(favorability - reducePoint, 0, LEVEL_3_POINT);
+        int result = Mth.clamp(favorability - reducePoint, 0, getPointByLevel(3));
         maid.setFavorability(result);
         int levelAfter = getLevel();
 
         if (levelBefore > levelAfter) {
-            AttributeInstance attack = maid.getAttribute(Attributes.ATTACK_DAMAGE);
-            AttributeInstance health = maid.getAttribute(Attributes.MAX_HEALTH);
-
-            if (attack != null) {
-                attack.setBaseValue(this.getAttackByLevel(levelAfter));
-            }
-
-            if (health != null) {
-                if (maid.isStruckByLightning()) {
-                    health.setBaseValue(this.getHealthByLevel(levelAfter) + 20);
-                } else {
-                    health.setBaseValue(this.getHealthByLevel(levelAfter));
-                }
-                if (maid.getHealth() > maid.getMaxHealth()) {
-                    maid.setHealth(maid.getMaxHealth());
-                }
-            }
+            updateAttributes(levelAfter);
 
             // 最后触发事件和饰品
             this.onFavorabilityLevelChange(levelBefore, levelAfter);
@@ -317,16 +276,24 @@ public class FavorabilityManager {
     }
 
     public void max() {
-        this.add(LEVEL_3_POINT);
+        this.add(getPointByLevel(3));
     }
 
     public void addAdditionalSaveData(CompoundTag compound) {
+        compound.putInt("AppliedFavorHealth", appliedHealth);
+        compound.putInt("AppliedFavorAttack", appliedAttack);
         CompoundTag data = new CompoundTag();
         this.counter.forEach((name, time) -> data.putInt(name, time.getTickCount()));
         compound.put(TAG_NAME, data);
     }
 
     public void readAdditionalSaveData(CompoundTag compound) {
+        int points = maid.getFavorability();
+        int legacyLevel = points >= 384 ? 3 : points >= 192 ? 2 : points >= 64 ? 1 : 0;
+        appliedHealth = compound.contains("AppliedFavorHealth", Tag.TAG_INT) ? compound.getInt("AppliedFavorHealth")
+                : (legacyLevel == 3 ? 80 : 20 + 10 * legacyLevel);
+        appliedAttack = compound.contains("AppliedFavorAttack", Tag.TAG_INT) ? compound.getInt("AppliedFavorAttack") : getAttackByLevel(legacyLevel);
+        if (!maid.level.isClientSide) updateAttributes(getLevel());
         if (compound.contains(TAG_NAME, Tag.TAG_COMPOUND)) {
             CompoundTag data = compound.getCompound(TAG_NAME);
             for (String name : data.getAllKeys()) {

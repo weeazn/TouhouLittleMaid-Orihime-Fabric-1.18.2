@@ -1,11 +1,18 @@
 package com.github.tartaricacid.touhoulittlemaid.api.bauble;
 
+import net.fabricmc.fabric.api.transfer.v1.item.ItemStorage;
+import net.fabricmc.fabric.api.transfer.v1.item.ItemVariant;
+import net.fabricmc.fabric.api.transfer.v1.storage.Storage;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.block.entity.BlockEntity;
 
 public interface IChestType {
+    default Storage<ItemVariant> storage(BlockEntity chest) {
+        return ItemStorage.SIDED.find(chest.getLevel(), chest.getBlockPos(), chest.getBlockState(), chest, null);
+    }
+
     int ALLOW_COUNT = 0;
     int DENY_COUNT = Integer.MAX_VALUE;
 

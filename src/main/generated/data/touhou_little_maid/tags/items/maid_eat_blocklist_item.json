@@ -8,6 +8,22 @@
     {
       "id": "kaleidoscope_cookery:green_chili",
       "required": false
+    },
+    {
+      "id": "heartytrinkets:red_heart",
+      "required": false
+    },
+    {
+      "id": "heartytrinkets:orange_heart",
+      "required": false
+    },
+    {
+      "id": "heartytrinkets:green_heart",
+      "required": false
+    },
+    {
+      "id": "heartytrinkets:blue_heart",
+      "required": false
     }
   ]
 }

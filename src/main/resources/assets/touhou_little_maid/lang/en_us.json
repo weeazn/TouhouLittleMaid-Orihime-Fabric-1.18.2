@@ -1,4 +1,7 @@
 {
+  "config.touhou_little_maid.maid.level_cost": "Extra favor needed for level %s",
+  "config.touhou_little_maid.maid.level_health": "Max HP gained at level %s",
+  "config.touhou_little_maid.misc.modded_power_chests": "P items in modded structure chests",
   "ai.touhou_little_maid.chat.system_voice_unavailable": "System speech is unavailable. Select another voice service in the maid chat speaker menu.",
   "config.touhou_little_maid.misc.extra_power_chests": "Additional chest loot tables for P items",
   "config.touhou_little_maid.misc.extra_power_chests.tooltip": "Enter one structure chest loot table ID per entry. Reopen the world or use /reload after saving.",

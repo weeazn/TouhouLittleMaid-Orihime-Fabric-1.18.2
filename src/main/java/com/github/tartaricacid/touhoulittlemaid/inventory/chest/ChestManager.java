@@ -25,6 +25,7 @@ public class ChestManager {
         for (ILittleMaid littleMaid : TouhouLittleMaid.EXTENSIONS) {
             littleMaid.addChestType(manager);
         }
+        manager.add(new TaggedChestType());
         ALL_CHEST_TYPES = ImmutableList.copyOf(ALL_CHEST_TYPES);
     }
 

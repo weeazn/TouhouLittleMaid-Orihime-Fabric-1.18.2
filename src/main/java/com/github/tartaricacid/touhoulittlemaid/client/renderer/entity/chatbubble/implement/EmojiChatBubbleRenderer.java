@@ -61,8 +61,6 @@ public class EmojiChatBubbleRenderer implements IChatBubbleRenderer {
 
     @Override
     public void render(EntityMaidRenderer renderer, EntityGraphics graphics) {
-        RenderSystem.enableBlend();
-        RenderSystem.defaultBlendFunc();
         graphics.blit(this.emoji, 0, 0, 0, 0, this.width, this.height, this.width, this.height);
     }
 

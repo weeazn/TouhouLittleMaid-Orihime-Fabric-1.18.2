@@ -2,6 +2,7 @@
   "replace": false,
   "values": [
     "minecraft:iron_golem",
+    "touhou_little_maid:maid",
     {
       "id": "guardvillagers:guard",
       "required": false

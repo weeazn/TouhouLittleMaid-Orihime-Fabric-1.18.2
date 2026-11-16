@@ -1,12 +1,10 @@
 package com.github.tartaricacid.touhoulittlemaid.client.renderer.entity.chatbubble;
 
 import com.github.tartaricacid.touhoulittlemaid.entity.passive.EntityMaid;
-import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.*;
 import cn.sh1rocu.touhoulittlemaid.client.PixelSlices;
 import it.unimi.dsi.fastutil.ints.IntIterator;
 import net.minecraft.client.gui.Font;
-import net.minecraft.client.renderer.GameRenderer;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.network.chat.Component;
@@ -76,6 +74,8 @@ public class EntityGraphics {
     }
 
     public int drawString(Font font, FormattedCharSequence text, float x, float y, int color, boolean dropShadow) {
+        if ((color & 0xFF000000) == 0) color |= 0xFF000000;
+        if (ShaderBubbleText.collect(this, font, text, x, y, color, dropShadow)) return (int) x + font.width(text);
         return font.drawInBatch(text, x, y, color, dropShadow, this.pose.last().pose(), this.bufferSource, false, 0, 15728880);
     }
 
@@ -173,16 +173,12 @@ public class EntityGraphics {
     }
 
     public void innerBlit(ResourceLocation atlas, int x1, int x2, int y1, int y2, int z, float minU, float maxU, float minV, float maxV) {
-        RenderSystem.setShaderTexture(0, atlas);
-        RenderSystem.setShader(GameRenderer::getPositionColorTexLightmapShader);
         Matrix4f matrix4f = this.pose.last().pose();
-        BufferBuilder bufferBuilder = Tesselator.getInstance().getBuilder();
-        bufferBuilder.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_COLOR_TEX_LIGHTMAP);
-        bufferBuilder.vertex(matrix4f, x1, y1, z).color(0xFFFFFFFF).uv(minU, minV).uv2(this.packedLight).endVertex();
-        bufferBuilder.vertex(matrix4f, x1, y2, z).color(0xFFFFFFFF).uv(minU, maxV).uv2(this.packedLight).endVertex();
-        bufferBuilder.vertex(matrix4f, x2, y2, z).color(0xFFFFFFFF).uv(maxU, maxV).uv2(this.packedLight).endVertex();
-        bufferBuilder.vertex(matrix4f, x2, y1, z).color(0xFFFFFFFF).uv(maxU, minV).uv2(this.packedLight).endVertex();
-        Tesselator.getInstance().end();
+        VertexConsumer vertices = this.bufferSource.getBuffer(RenderType.text(atlas));
+        vertices.vertex(matrix4f, x1, y1, z).color(0xFFFFFFFF).uv(minU, minV).uv2(net.minecraft.client.renderer.LightTexture.FULL_BRIGHT).endVertex();
+        vertices.vertex(matrix4f, x1, y2, z).color(0xFFFFFFFF).uv(minU, maxV).uv2(net.minecraft.client.renderer.LightTexture.FULL_BRIGHT).endVertex();
+        vertices.vertex(matrix4f, x2, y2, z).color(0xFFFFFFFF).uv(maxU, maxV).uv2(net.minecraft.client.renderer.LightTexture.FULL_BRIGHT).endVertex();
+        vertices.vertex(matrix4f, x2, y1, z).color(0xFFFFFFFF).uv(maxU, minV).uv2(net.minecraft.client.renderer.LightTexture.FULL_BRIGHT).endVertex();
     }
 
     public EntityMaid getMaid() {

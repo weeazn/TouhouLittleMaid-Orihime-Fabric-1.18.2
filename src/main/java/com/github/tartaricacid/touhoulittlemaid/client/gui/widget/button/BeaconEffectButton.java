@@ -2,6 +2,7 @@ package com.github.tartaricacid.touhoulittlemaid.client.gui.widget.button;
 
 import cn.sh1rocu.touhoulittlemaid.client.MaidGui;
 import com.mojang.blaze3d.vertex.PoseStack;
+import com.mojang.blaze3d.systems.RenderSystem;
 import com.github.tartaricacid.touhoulittlemaid.TouhouLittleMaid;
 import com.github.tartaricacid.touhoulittlemaid.network.message.SetBeaconPotionMessage;
 import com.github.tartaricacid.touhoulittlemaid.tileentity.TileEntityMaidBeacon;
@@ -44,6 +45,7 @@ public class BeaconEffectButton extends TouhouStateSwitchButton {
     @Override
     public void renderButton(PoseStack graphics, int mouseX, int mouseY, float partialTicks) {
         super.renderButton(graphics, mouseX, mouseY, partialTicks);
+        RenderSystem.setShaderTexture(0, this.sprite.atlas().location());
         MaidGui.blit(graphics, this.x + 2, this.y + 2, 0, 18, 18, this.sprite);
     }
 

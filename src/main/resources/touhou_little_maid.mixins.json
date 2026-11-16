@@ -27,6 +27,7 @@
     "accessor.LivingEntityAccessor"
   ],
   "client": [
+    "client.BubbleOverlayMixin",
     "client.ClientPacketListenerMixin",
     "client.HumanoidModelMixin",
     "client.ItemPropertiesMixin",

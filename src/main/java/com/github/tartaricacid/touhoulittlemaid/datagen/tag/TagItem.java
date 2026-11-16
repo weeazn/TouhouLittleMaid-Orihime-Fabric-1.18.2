@@ -72,6 +72,10 @@ public class TagItem extends FabricTagProvider<Item> {
 
         // 森罗物语辣椒
         getOrCreateTagBuilder(MAID_EAT_BLOCKLIST_ITEM)
+                .addOptional(new ResourceLocation("heartytrinkets:red_heart"))
+                .addOptional(new ResourceLocation("heartytrinkets:orange_heart"))
+                .addOptional(new ResourceLocation("heartytrinkets:green_heart"))
+                .addOptional(new ResourceLocation("heartytrinkets:blue_heart"))
                 .addOptional(new ResourceLocation("kaleidoscope_cookery:red_chili"))
                 .addOptional(new ResourceLocation("kaleidoscope_cookery:green_chili"));
     }

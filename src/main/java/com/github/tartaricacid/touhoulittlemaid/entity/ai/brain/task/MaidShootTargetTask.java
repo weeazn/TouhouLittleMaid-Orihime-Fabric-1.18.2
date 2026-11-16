@@ -82,6 +82,7 @@ public class MaidShootTargetTask extends Behavior<EntityMaid> {
 
             // 如果实体手部处于激活状态
             if (owner.isUsingItem()) {
+                if (owner.getUsedItemHand() != InteractionHand.MAIN_HAND) return;
                 // 如果看不见对方超时 60，重置激活状态
                 if (!canSee && this.seeTime < -60) {
                     owner.stopUsingItem();
@@ -119,6 +120,7 @@ public class MaidShootTargetTask extends Behavior<EntityMaid> {
     protected void stop(ServerLevel worldIn, EntityMaid entityIn, long gameTimeIn) {
         this.seeTime = 0;
         this.attackTime = -1;
-        entityIn.stopUsingItem();
+        if (entityIn.isUsingItem() && entityIn.getUsedItemHand() == InteractionHand.MAIN_HAND
+                && entityIn.getUseItem().getItem() instanceof ProjectileWeaponItem) entityIn.stopUsingItem();
     }
 }

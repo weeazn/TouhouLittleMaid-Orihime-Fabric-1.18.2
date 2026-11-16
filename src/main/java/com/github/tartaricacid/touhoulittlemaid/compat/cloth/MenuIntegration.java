@@ -1,6 +1,7 @@
 package com.github.tartaricacid.touhoulittlemaid.compat.cloth;
 
 import com.github.tartaricacid.touhoulittlemaid.config.GeneralConfig;
+import com.github.tartaricacid.touhoulittlemaid.config.ServerConfig;
 
 import net.minecraft.network.chat.TranslatableComponent;
 import net.minecraft.network.chat.TextComponent;
@@ -18,11 +19,26 @@ import java.util.List;
 public class MenuIntegration {
     public static ConfigBuilder getConfigBuilder() {
         ConfigBuilder root = ConfigBuilder.create().setTitle(new TextComponent("Touhou Little Maid"));
-        root.setSavingRunnable(GeneralConfig.CONFIG::save);
+        boolean localWorld = net.minecraft.client.Minecraft.getInstance().hasSingleplayerServer() && ServerConfig.SPEC.isLoaded();
+        root.setSavingRunnable(() -> {
+            GeneralConfig.CONFIG.save();
+            if (localWorld) ServerConfig.SPEC.save();
+        });
         root.setGlobalized(true);
         root.setGlobalizedExpanded(false);
         ConfigEntryBuilder entryBuilder = root.entryBuilder();
         maidConfig(root, entryBuilder);
+        if (localWorld) {
+            ConfigCategory maid = root.getOrCreateCategory(new TranslatableComponent("config.touhou_little_maid.maid"));
+            for (int i = 0; i < ServerConfig.FAVOR_COST.length; i++) {
+                var cost = ServerConfig.FAVOR_COST[i];
+                var health = ServerConfig.FAVOR_HEALTH[i];
+                maid.addEntry(entryBuilder.startIntField(new TranslatableComponent("config.touhou_little_maid.maid.level_cost", i + 1), cost.get())
+                        .setDefaultValue(ServerConfig.defaultInt(cost)).setMin(1).setMax(1000000).setSaveConsumer(cost::set).build());
+                maid.addEntry(entryBuilder.startIntField(new TranslatableComponent("config.touhou_little_maid.maid.level_health", i + 1), health.get())
+                        .setDefaultValue(ServerConfig.defaultInt(health)).setMin(0).setMax(328).setSaveConsumer(health::set).build());
+            }
+        }
         chairConfig(root, entryBuilder);
         miscConfig(root, entryBuilder);
         vanillaConfig(root, entryBuilder);
@@ -245,6 +261,9 @@ public class MenuIntegration {
                 .setDefaultValue(0.16).setMin(0).setMax(5)
                 .setTooltip(new TranslatableComponent("config.touhou_little_maid.misc.maid_fairy_power_point.tooltip"))
                 .setSaveConsumer(d -> MiscConfig.MAID_FAIRY_POWER_POINT.set(d)).build());
+
+        misc.addEntry(entryBuilder.startBooleanToggle(new TranslatableComponent("config.touhou_little_maid.misc.modded_power_chests"), MiscConfig.MODDED_POWER_CHESTS.get())
+                .setDefaultValue(true).setSaveConsumer(MiscConfig.MODDED_POWER_CHESTS::set).build());
 
         misc.addEntry(entryBuilder.startIntField(new TranslatableComponent("config.touhou_little_maid.misc.maid_fairy_spawn_probability"), MiscConfig.MAID_FAIRY_SPAWN_PROBABILITY.get())
                 .setDefaultValue(70).setMin(0).setMax(Integer.MAX_VALUE)

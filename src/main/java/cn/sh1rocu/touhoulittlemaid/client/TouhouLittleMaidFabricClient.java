@@ -41,6 +41,7 @@ import static cn.sh1rocu.touhoulittlemaid.TouhouLittleMaidFabric.*;
 public class TouhouLittleMaidFabricClient implements ClientModInitializer {
     @Override
     public void onInitializeClient() {
+        com.github.tartaricacid.touhoulittlemaid.client.renderer.entity.chatbubble.ShaderBubbleText.init();
         ClientLifecycleEvents.CLIENT_STOPPING.register(client -> MaidSystemVoice.close());
         // Skin and sound pickers are ordinary screens. Esc can leave their backing menu open.
         ClientTickEvents.END_CLIENT_TICK.register(client -> {

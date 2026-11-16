@@ -13,6 +13,7 @@ public final class MiscConfig {
     public static ForgeConfigSpec.IntValue MAID_FAIRY_SPAWN_PROBABILITY;
     public static ForgeConfigSpec.ConfigValue<List<? extends String>> MAID_FAIRY_BLACKLIST_DIMENSION;
     public static ForgeConfigSpec.DoubleValue PLAYER_DEATH_LOSS_POWER_POINT;
+    public static ForgeConfigSpec.BooleanValue MODDED_POWER_CHESTS;
     public static ForgeConfigSpec.BooleanValue ALWAYS_SHOW_POWER;
     public static ForgeConfigSpec.ConfigValue<List<? extends String>> EXTRA_POWER_CHESTS;
     public static ForgeConfigSpec.BooleanValue GIVE_SMART_SLAB;
@@ -42,6 +43,9 @@ public final class MiscConfig {
         MAID_FAIRY_BLACKLIST_DIMENSION = builder.defineList("MaidFairyBlacklistDimension",
                 Lists.newArrayList(Level.NETHER.location().toString(), Level.END.location().toString(),
                         "twilightforest:twilight_forest"), MiscConfig::checkId);
+
+        MODDED_POWER_CHESTS = builder.comment("Include modded structure loot tables under chests/ when rolling P items")
+                .define("ModdedPowerChests", true);
 
         builder.comment("Additional structure chest loot table IDs that can roll P items. Reload world data after editing.")
                 .translation(translateKey("extra_power_chests"));

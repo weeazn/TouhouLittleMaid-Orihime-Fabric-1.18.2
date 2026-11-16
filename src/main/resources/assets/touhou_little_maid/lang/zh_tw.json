@@ -1,4 +1,7 @@
 {
+  "config.touhou_little_maid.maid.level_cost": "升到 %s 級所需的額外好感",
+  "config.touhou_little_maid.maid.level_health": "升到 %s 級增加的生命上限（2 點為一顆心）",
+  "config.touhou_little_maid.misc.modded_power_chests": "在模組遺跡寶箱中生成 P 點",
   "ai.touhou_little_maid.chat.system_voice_unavailable": "目前無法使用系統朗讀。可在女僕聊天視窗的喇叭選單中選擇其他語音站點。",
   "config.touhou_little_maid.misc.extra_power_chests": "額外掉落 P 點的寶箱戰利品表",
   "config.touhou_little_maid.misc.extra_power_chests.tooltip": "每行填入一個結構寶箱戰利品表 ID。儲存後重新進入世界或使用 /reload 生效。",

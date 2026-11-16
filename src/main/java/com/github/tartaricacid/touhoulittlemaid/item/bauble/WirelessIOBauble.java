@@ -9,7 +9,6 @@ import com.github.tartaricacid.touhoulittlemaid.entity.passive.EntityMaid;
 import com.github.tartaricacid.touhoulittlemaid.init.InitTrigger;
 import com.github.tartaricacid.touhoulittlemaid.inventory.chest.ChestManager;
 import com.github.tartaricacid.touhoulittlemaid.item.ItemWirelessIO;
-import net.fabricmc.fabric.api.transfer.v1.item.ItemStorage;
 import net.fabricmc.fabric.api.transfer.v1.item.ItemVariant;
 import net.fabricmc.fabric.api.transfer.v1.storage.Storage;
 import net.fabricmc.fabric.api.transfer.v1.storage.StorageView;
@@ -120,7 +119,7 @@ public class WirelessIOBauble implements IMaidBauble {
                 if (openCount > 0) {
                     return;
                 }
-                Storage<ItemVariant> chestInv = ItemStorage.SIDED.find(maid.level, te.getBlockPos(), te.getBlockState(), te, null);
+                Storage<ItemVariant> chestInv = type.storage(te);
                 if (chestInv != null) {
                     IItemHandler maidInv = maid.getAvailableInv(false);
                     boolean isMaidToChest = ItemWirelessIO.isMaidToChest(baubleItem);
@@ -128,7 +127,7 @@ public class WirelessIOBauble implements IMaidBauble {
                     byte[] slotConfig = ItemWirelessIO.getSlotConfig(baubleItem);
                     byte[] slotConfigTmp = null;
                     if (slotConfig != null) {
-                        slotConfigTmp = Arrays.copyOf(slotConfig, slotConfig.length);
+                        slotConfigTmp = Arrays.copyOf(slotConfig, Math.max(SLOT_NUM, maidInv.getSlots()));
                         slotConfigTmp[maidInv.getSlots() - 2] = slotConfigTmp[SLOT_NUM - 2];
                         slotConfigTmp[maidInv.getSlots() - 1] = slotConfigTmp[SLOT_NUM - 1];
                     }
@@ -175,15 +174,10 @@ public class WirelessIOBauble implements IMaidBauble {
                 }
             }
             if (allowMove) {
-                int beforeCount = maidInvItem.getCount();
-//                ItemStack after = ItemHandlerHelper.insertItemStacked(chest, maidInvItem.copy(), false);
-//                int afterCount = after.getCount();
-//                // Sync Client & Server
-//                if (beforeCount != afterCount) {
-//                    maid.extractItem(i, beforeCount - afterCount, false);
-//                }
+                ItemStack extractable = maid.extractItem(i, maidInvItem.getCount(), true);
+                if (extractable.isEmpty()) continue;
                 try (Transaction transaction = Transaction.openOuter()) {
-                    long inserted = chest.insert(ItemVariant.of(maidInvItem.copy()), beforeCount, transaction);
+                    long inserted = chest.insert(ItemVariant.of(extractable), extractable.getCount(), transaction);
                     if (inserted > 0) {
                         maid.extractItem(i, (int) inserted, false);
                         transaction.commit();
@@ -194,9 +188,14 @@ public class WirelessIOBauble implements IMaidBauble {
     }
 
     private void chestToMaid(Storage<ItemVariant> chest, IItemHandler maid, boolean isBlacklist, IItemHandler filterList, boolean[] slotConfig) {
-        for (StorageView<ItemVariant> view : chest.iterable(null)) {
-            if (view.isResourceBlank() || view.getAmount() <= 0) continue;
-            ItemVariant chestInvStack = view.getResource();
+        var contents = new java.util.LinkedHashMap<ItemVariant, Long>();
+        try (Transaction scan = Transaction.openOuter()) {
+            for (StorageView<ItemVariant> view : chest.iterable(scan)) {
+                if (!view.isResourceBlank()) contents.merge(view.getResource(), view.getAmount(), Long::sum);
+            }
+        }
+        for (var entry : contents.entrySet()) {
+            ItemVariant chestInvStack = entry.getKey();
             boolean allowMove = isBlacklist;
             for (int j = 0; j < filterList.getSlots(); j++) {
                 ItemStack filterItem = filterList.getStackInSlot(j);
@@ -207,14 +206,13 @@ public class WirelessIOBauble implements IMaidBauble {
                 }
             }
             if (allowMove) {
-                int beforeCount = (int) view.getAmount();
-                ItemStack after = insertItemStacked(maid, chestInvStack.toStack(beforeCount).copy(), false, slotConfig);
-                int afterCount = after.getCount();
-                // Sync Client & Server
-                if (beforeCount != afterCount) {
-                    //chest.extractItem(i, beforeCount - afterCount, false);
-                    try (Transaction transaction = Transaction.openOuter()) {
-                        chest.extract(view.getResource(), beforeCount - afterCount, transaction);
+                int offered = (int) Math.min(entry.getValue(), (long) maid.getSlots() * chestInvStack.getItem().getMaxStackSize());
+                int capacity = offered - insertItemStacked(maid, chestInvStack.toStack(offered), true, slotConfig).getCount();
+                if (capacity <= 0) continue;
+                try (Transaction transaction = Transaction.openOuter()) {
+                    int extracted = (int) chest.extract(chestInvStack, capacity, transaction);
+                    if (extracted > 0) {
+                        insertItemStacked(maid, chestInvStack.toStack(extracted), false, slotConfig);
                         transaction.commit();
                     }
                 }

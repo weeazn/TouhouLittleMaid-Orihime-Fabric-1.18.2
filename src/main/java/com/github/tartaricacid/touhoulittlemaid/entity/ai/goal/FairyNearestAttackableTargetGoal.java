@@ -34,14 +34,14 @@ public class FairyNearestAttackableTargetGoal<T extends LivingEntity> extends Ta
     }
 
     private AABB getTargetSearchArea(double distance) {
-        return this.mob.getBoundingBox().inflate(distance, 4, distance);
+        return this.mob.getBoundingBox().inflate(distance);
     }
 
     private void findTarget() {
         Level level = this.mob.level;
         AABB searchArea = this.getTargetSearchArea(this.getFollowDistance());
         List<LivingEntity> entities = level.getEntitiesOfClass(LivingEntity.class, searchArea,
-                e -> e.getType().is(TagEntity.MAID_FAIRY_ATTACK_GOAL));
+                e -> e instanceof net.minecraft.world.entity.player.Player || e.getType().is(TagEntity.MAID_FAIRY_ATTACK_GOAL));
         this.target = level.getNearestEntity(entities, this.targetConditions, this.mob, this.mob.getX(), this.mob.getEyeY(), this.mob.getZ());
     }
 

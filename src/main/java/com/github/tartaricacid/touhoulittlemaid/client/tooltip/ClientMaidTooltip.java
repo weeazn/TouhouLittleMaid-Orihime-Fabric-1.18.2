@@ -37,9 +37,10 @@ public class ClientMaidTooltip implements ClientTooltipComponent {
     private final String customName;
 
     public ClientMaidTooltip(ItemMaidTooltip tooltip) {
-        this.info = CustomPackLoader.MAID_MODELS.getInfo(tooltip.modelId()).orElse(null);
+        var stored = CustomPackLoader.MAID_MODELS.getInfo(tooltip.modelId());
+        this.info = stored.or(() -> CustomPackLoader.MAID_MODELS.getInfo(EntityMaid.DEFAULT_MODEL_ID)).orElse(null);
         this.ysmMaidInfo = tooltip.ysmMaidInfo();
-        this.name = getName(this.info, this.ysmMaidInfo);
+        this.name = stored.isEmpty() && !ysmMaidInfo.isYsmModel() ? new TextComponent(tooltip.modelId()) : getName(this.info, this.ysmMaidInfo);
         this.customName = tooltip.customName();
     }
 
@@ -75,6 +76,16 @@ public class ClientMaidTooltip implements ClientTooltipComponent {
         if (info == null) {
             return;
         }
+        guiGraphics.pushPose();
+        try {
+            guiGraphics.translate(0, 0, blitOffset + 1);
+            drawPreview(font, pX, pY, guiGraphics);
+        } finally {
+            guiGraphics.popPose();
+        }
+    }
+
+    private void drawPreview(Font font, int pX, int pY, PoseStack guiGraphics) {
         Level world = Minecraft.getInstance().level;
         if (world == null) {
             return;

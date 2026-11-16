@@ -80,21 +80,21 @@ public class ChatBubbleRenderer {
 
         if (position == IChatBubbleRenderer.Position.LEFT) {
             graphics.blitNineSliced(texture, -marginX - bgWidth, -bgHeight, bgWidth, bgHeight, 8, 8, 48, 24, 0, 0);
-            graphics.getPoseStack().translate(0, 0, -0.01);
+            graphics.getPoseStack().translate(0, 0, -0.5);
             graphics.blit(texture, -marginX - 8, -8, 32, 24, 16, 16);
-            graphics.getPoseStack().translate(-marginX - bgWidth + offset, -bgHeight + offset, -0.01);
+            graphics.getPoseStack().translate(-marginX - bgWidth + offset, -bgHeight + offset, -0.5);
             chatBubble.render(renderer, graphics);
         } else if (position == IChatBubbleRenderer.Position.RIGHT) {
             graphics.blitNineSliced(texture, marginX, -bgHeight, bgWidth, bgHeight, 8, 8, 48, 24, 0, 0);
-            graphics.getPoseStack().translate(0, 0, -0.01);
+            graphics.getPoseStack().translate(0, 0, -0.5);
             graphics.blit(texture, marginX - 8, -8, 0, 24, 16, 16);
-            graphics.getPoseStack().translate(offset + marginX, -bgHeight + offset, -0.01);
+            graphics.getPoseStack().translate(offset + marginX, -bgHeight + offset, -0.5);
             chatBubble.render(renderer, graphics);
         } else if (position == IChatBubbleRenderer.Position.CENTER) {
             graphics.blitNineSliced(texture, -bgWidth / 2, -bgHeight, bgWidth, bgHeight, 8, 8, 48, 24, 0, 0);
-            graphics.getPoseStack().translate(0, 0, -0.01);
+            graphics.getPoseStack().translate(0, 0, -0.5);
             graphics.blit(texture, -8, -8, 16, 24, 16, 16);
-            graphics.getPoseStack().translate(-bgWidth / 2d + offset, -bgHeight + offset, -0.01);
+            graphics.getPoseStack().translate(-bgWidth / 2d + offset, -bgHeight + offset, -0.5);
             chatBubble.render(renderer, graphics);
         }
 
