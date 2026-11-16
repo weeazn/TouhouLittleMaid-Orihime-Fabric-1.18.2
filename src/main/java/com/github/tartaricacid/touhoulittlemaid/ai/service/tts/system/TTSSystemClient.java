@@ -6,7 +6,7 @@ import com.github.tartaricacid.touhoulittlemaid.ai.service.tts.TTSConfig;
 import com.github.tartaricacid.touhoulittlemaid.ai.service.tts.TTSSystemServices;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
-import net.minecraft.client.Minecraft;
+import com.github.tartaricacid.touhoulittlemaid.client.sound.MaidSystemVoice;
 
 public class TTSSystemClient implements TTSClient, TTSSystemServices {
     @Override
@@ -18,7 +18,6 @@ public class TTSSystemClient implements TTSClient, TTSSystemServices {
 
     @Environment(EnvType.CLIENT)
     private void onHandle(String message) {
-        Minecraft mc = Minecraft.getInstance();
-        com.mojang.text2speech.Narrator.getNarrator().say(message, true);
+        MaidSystemVoice.speak(message);
     }
 }

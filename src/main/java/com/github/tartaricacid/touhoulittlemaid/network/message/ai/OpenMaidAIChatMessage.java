@@ -33,7 +33,7 @@ public class OpenMaidAIChatMessage {
             return;
         }
         Entity entity = player.level.getEntity(entityId);
-        if (entity instanceof EntityMaid maid) {
+        if (entity instanceof EntityMaid maid && maid.isAlive() && maid.isOwnedBy(player)) {
             // 发送同步信息（包含 Token 用量）
             ServerPlayNetworking.send(player, SyncMaidAIDataMessage.ID, SyncMaidAIDataMessage.encode(new SyncMaidAIDataMessage(maid, player)));
         }

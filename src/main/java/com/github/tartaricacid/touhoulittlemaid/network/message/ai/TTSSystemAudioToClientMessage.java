@@ -29,7 +29,7 @@ public class TTSSystemAudioToClientMessage {
     public static void handle(Minecraft client, ClientPacketListener handler, FriendlyByteBuf buf, PacketSender responseSender) {
         String siteName = buf.readUtf();
         TTSSite ttsSite = AvailableSites.getTTSSite(siteName);
-        if (ttsSite.client() instanceof TTSSystemServices services) {
+        if (ttsSite != null && ttsSite.enabled() && ttsSite.client() instanceof TTSSystemServices services) {
             Pair<String, TTSConfig> pair = services.readFromNetwork(buf);
             client.execute(() -> onHandle(siteName, pair.getLeft(), pair.getRight(), services));
         }

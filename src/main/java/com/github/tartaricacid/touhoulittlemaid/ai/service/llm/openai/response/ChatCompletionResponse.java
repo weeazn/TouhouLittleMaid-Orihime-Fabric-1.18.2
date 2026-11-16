@@ -31,7 +31,7 @@ public class ChatCompletionResponse {
 
     @Nullable
     public Message getFirstChoice() {
-        if (this.choices.length > 0) {
+        if (this.choices != null && this.choices.length > 0 && this.choices[0] != null) {
             Choice choice = this.choices[0];
             return choice.getMessage();
         }

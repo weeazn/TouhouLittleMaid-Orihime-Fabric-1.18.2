@@ -127,7 +127,7 @@ public class LLMOpenAIClient implements LLMClient {
         HttpRequest httpRequest = builder.build();
         httpClient.sendAsync(httpRequest, HttpResponse.BodyHandlers.ofString())
                 .whenComplete((response, throwable) ->
-                        handle(callback, response, throwable, httpRequest));
+                        callback.runOnServerThread(() -> handle(callback, response, throwable, httpRequest)));
     }
 
     /**
@@ -153,6 +153,10 @@ public class LLMOpenAIClient implements LLMClient {
                 TouhouLittleMaid.LOGGER.info(GSON.toJson(chat));
             }
 
+            if (chat == null) {
+                callback.onFailure(request, new IllegalArgumentException("Empty completion response"), ErrorCode.CHAT_CHOICE_IS_EMPTY);
+                return;
+            }
             Usage usage = chat.getUsage();
             if (usage != null) {
                 // TOKEN 计数

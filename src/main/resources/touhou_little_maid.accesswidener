@@ -12,6 +12,7 @@ accessible method net/minecraft/world/item/crafting/Ingredient fromValues (Ljava
 accessible field net/minecraft/world/level/levelgen/structure/templatesystem/StructureTemplate palettes Ljava/util/List;# palettes
 accessible method net/minecraft/world/entity/LivingEntity breakItem (Lnet/minecraft/world/item/ItemStack;)V # breakItem
 accessible field net/minecraft/client/Minecraft fps I # fps
+accessible field net/minecraft/client/gui/chat/NarratorChatListener narrator Lcom/mojang/text2speech/Narrator;
 accessible method net/minecraft/world/level/biome/Biome getTemperature (Lnet/minecraft/core/BlockPos;)F # getTemperature
 accessible field net/minecraft/world/entity/Entity level Lnet/minecraft/world/level/Level; # level
 

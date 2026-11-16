@@ -1,4 +1,5 @@
 {
+  "ai.touhou_little_maid.chat.system_voice_unavailable": "System speech is unavailable. Select another voice service in the maid chat speaker menu.",
   "config.touhou_little_maid.misc.extra_power_chests": "Additional chest loot tables for P items",
   "config.touhou_little_maid.misc.extra_power_chests.tooltip": "Enter one structure chest loot table ID per entry. Reopen the world or use /reload after saving.",
   "config.touhou_little_maid.misc.always_show_power": "Always show player P points",

@@ -26,6 +26,8 @@ import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.blockrenderlayer.v1.BlockRenderLayerMap;
 import net.fabricmc.fabric.api.client.item.v1.ItemTooltipCallback;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
+import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientLifecycleEvents;
+import com.github.tartaricacid.touhoulittlemaid.client.sound.MaidSystemVoice;
 import net.fabricmc.fabric.api.client.rendering.v1.BuiltinItemRendererRegistry;
 import net.fabricmc.fabric.api.client.rendering.v1.TooltipComponentCallback;
 import net.fabricmc.fabric.api.client.rendering.v1.WorldRenderEvents;
@@ -39,6 +41,7 @@ import static cn.sh1rocu.touhoulittlemaid.TouhouLittleMaidFabric.*;
 public class TouhouLittleMaidFabricClient implements ClientModInitializer {
     @Override
     public void onInitializeClient() {
+        ClientLifecycleEvents.CLIENT_STOPPING.register(client -> MaidSystemVoice.close());
         // Skin and sound pickers are ordinary screens. Esc can leave their backing menu open.
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
             if (client.screen == null && client.player != null && client.player.containerMenu instanceof AbstractMaidContainer) {

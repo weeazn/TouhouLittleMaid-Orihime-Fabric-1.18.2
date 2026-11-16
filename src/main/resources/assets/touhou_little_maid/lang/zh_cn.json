@@ -1,4 +1,5 @@
 {
+  "ai.touhou_little_maid.chat.system_voice_unavailable": "当前系统朗读不可用。可以在女仆聊天窗口的扬声器菜单中选择其他语音站点。",
   "config.touhou_little_maid.misc.extra_power_chests": "额外掉落 P 点的宝箱战利品表",
   "config.touhou_little_maid.misc.extra_power_chests.tooltip": "每行填一个结构宝箱战利品表 ID。保存后重新进入世界或使用 /reload 生效。",
   "config.touhou_little_maid.misc.always_show_power": "始终显示玩家 P 点",
