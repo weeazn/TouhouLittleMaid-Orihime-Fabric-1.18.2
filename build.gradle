@@ -1,0 +1,111 @@
+plugins {
+    id 'fabric-loom' version '1.10.5'
+}
+
+version = project.mod_version
+group = project.maven_group
+
+base {
+    archivesName = "${archives_base_name}"
+}
+
+
+fabricApi {
+    configureDataGeneration {
+        client = true
+    }
+}
+
+loom {
+    accessWidenerPath = file("src/main/resources/touhou_little_maid.accesswidener")
+    mixin {
+        defaultRefmapName = "touhou_little_maid.refmap.json"
+    }
+    runs {
+        datagen {
+            property "fabric-api.datagen.modid", "touhou_little_maid"
+        }
+    }
+}
+
+repositories {
+    exclusiveContent {
+        forRepository { flatDir { dirs 'libs' } }
+        filter { includeModule 'com.jamieswhiteshirt', 'reach-entity-attributes' }
+    }
+    mavenCentral()
+}
+
+dependencies {
+    minecraft "com.mojang:minecraft:${project.minecraft_version}"
+    mappings loom.officialMojangMappings()
+    modImplementation "net.fabricmc:fabric-loader:${project.loader_version}"
+    modImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_version}"
+    modImplementation include('com.jamieswhiteshirt:reach-entity-attributes:2.2.0')
+    def devApis = file('.backport-dev/compile-api.jar')
+    if (!devApis.exists()) {
+        throw new GradleException('Run python tools/prepare_dev.py before building the backport.')
+    }
+    modCompileOnly files(devApis)
+    modLocalRuntime fileTree('.backport-dev/downloads') {
+        include 'ForgeConfigAPIPort-*', 'cardinal-components-api-*', 'porting_lib-*'
+    }
+    compileOnly 'org.jetbrains:annotations:24.1.0'
+    compileOnly 'com.google.code.findbugs:jsr305:3.0.2'
+    implementation(include('org.openjdk.nashorn:nashorn-core:15.4'))
+    implementation(include('org.joml:joml:1.10.5'))
+    // Include the audio codecs and service providers as ordinary Fabric nested libraries.
+    implementation(include('org.gagravarr:vorbis-java-core:0.8'))
+    implementation(include('io.github.jaredmdobson:concentus:1.0.2'))
+    implementation(include('com.googlecode.soundlibs:mp3spi:1.9.5.4'))
+    implementation(include('com.googlecode.soundlibs:tritonus-share:0.3.7.4'))
+    implementation(include('com.googlecode.soundlibs:jlayer:1.0.1.4'))
+    implementation(include('org.yaml:snakeyaml:2.4'))
+    implementation(include('org.apache.commons:commons-math3:3.6.1'))
+    implementation(include('org.apache.bcel:bcel:6.6.1'))
+}
+
+sourceSets.main.resources.srcDir('src/main/generated')
+
+processResources {
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+    inputs.property "version", project.version
+    inputs.property "minecraft_version", project.minecraft_version
+    inputs.property "loader_version", project.loader_version
+    filteringCharset "UTF-8"
+
+    filesMatching("fabric.mod.json") {
+        expand "version": project.version,
+                "minecraft_version": project.minecraft_version,
+                "loader_version": project.loader_version
+    }
+}
+
+def targetJavaVersion = 17
+tasks.withType(JavaCompile).configureEach {
+    it.options.encoding = "UTF-8"
+    it.options.compilerArgs.addAll(['-Xmaxerrs', '2000'])
+    if (targetJavaVersion >= 10 || JavaVersion.current().isJava10Compatible()) {
+        it.options.release.set(targetJavaVersion)
+    }
+}
+
+tasks.withType(AbstractArchiveTask).configureEach {
+    preserveFileTimestamps = false
+    reproducibleFileOrder = true
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+}
+
+java {
+    def javaVersion = JavaVersion.toVersion(targetJavaVersion)
+    if (JavaVersion.current() < javaVersion) {
+        toolchain.languageVersion = JavaLanguageVersion.of(targetJavaVersion)
+    }
+    withSourcesJar()
+}
+
+jar {
+    from(["LICENSE-MIT", "LICENSE-CC"]) {
+        rename { "${it}_${project.archives_base_name}" }
+    }
+}

@@ -1,0 +1,226 @@
+[
+  {
+    "file": "architectury-4.11.93-fabric.jar",
+    "sha256": "04fc3a152b7d69b602f1cc17ae5203cf02b3e0b7fc114d734e3c771fd77a8657",
+    "url": "https://cdn.modrinth.com/data/lhGA9TYQ/versions/j5zDzQqi/architectury-4.11.93-fabric.jar"
+  },
+  {
+    "file": "cardinal-components-api-4.2.0.jar",
+    "sha256": "3de4ece605c0e603685bb0a33adbdc18f69c84b706b1653f73ea96708ce301fa",
+    "url": "https://cdn.modrinth.com/data/K01OU20C/versions/4.2.0/cardinal-components-api-4.2.0.jar",
+    "required": true
+  },
+  {
+    "file": "cloth-config-6.5.102-fabric.jar",
+    "sha256": "aae8bfc5d695f28ecf82a0af8d35dd57c6357ecc4c4b19435494ffb50e06a177",
+    "url": "https://cdn.modrinth.com/data/9s6osm5g/versions/BLMp2TRt/cloth-config-6.5.102-fabric.jar"
+  },
+  {
+    "file": "farmers-delight-fabric-1.18.2-1.2.5.jar",
+    "sha256": "8b6706ddc18f8b61ef9c07acd26a72416a7dbbf78b37da3dbcea21854b8df0a3",
+    "url": "https://cdn.modrinth.com/data/4EakbH8e/versions/G8lpe9fB/farmers-delight-fabric-1.18.2-1.2.5.jar"
+  },
+  {
+    "file": "ForgeConfigAPIPort-v3.2.4-1.18.2-Fabric.jar",
+    "sha256": "50bae68fdd7c1689a461775782f7bf9b67cd7d99d1772115ffd48e27de46cd3c",
+    "url": "https://cdn.modrinth.com/data/ohNO6lps/versions/XGKEYlsw/ForgeConfigAPIPort-v3.2.4-1.18.2-Fabric.jar",
+    "required": true
+  },
+  {
+    "file": "improvedmobs-1.18.2-1.13.2-fabric.jar",
+    "sha256": "928fea2f6ce73b5634a95724e74f3c42f347139c5e4fe6f12b0ccdf57cba3b49",
+    "url": "https://cdn.modrinth.com/data/23MovWyi/versions/jDr3qBqx/improvedmobs-1.18.2-1.13.2-fabric.jar"
+  },
+  {
+    "file": "InventoryProfilesNext-fabric-1.18.2-1.9.3.jar",
+    "sha256": "1375a81e498907e6b56b4b5c43ea94b075d2aeece2fed1183078085f83dc355e",
+    "url": "https://cdn.modrinth.com/data/O7RBXm3n/versions/AETGVChK/InventoryProfilesNext-fabric-1.18.2-1.9.3.jar"
+  },
+  {
+    "file": "iris-mc1.18.2-1.6.0.jar",
+    "sha256": "9ddce0e59c3d4bed96c47a2a975f9644ca061ba13e578138894fa86733d2ff53",
+    "url": "https://cdn.modrinth.com/data/YL57xq9U/versions/xRdKiTLA/iris-mc1.18.2-1.6.0.jar"
+  },
+  {
+    "file": "Jade-1.18.2-fabric-5.100.0.jar",
+    "sha256": "e2454ca790a29d24c8d18d88ebff87377b6e560f477ecf9ab14b5907ba5fd1c1",
+    "url": "https://cdn.modrinth.com/data/nvQzSEkH/versions/MSJGBHIo/Jade-1.18.2-fabric-5.100.0.jar"
+  },
+  {
+    "file": "kubejs-fabric-1802.5.5-build.569.jar",
+    "sha256": "dd4ccb0f7608987e27c34f40ae76fd8e62d11e52433bf2097793b65276166e31",
+    "url": "https://cdn.modrinth.com/data/umyGl7zF/versions/TSy6UYgH/kubejs-fabric-1802.5.5-build.569.jar"
+  },
+  {
+    "file": "libIPN-fabric-1.18.2-2.0.3.jar",
+    "sha256": "262c55e122599f61e01a4766417bf140efb9082efa612f73bb6c298f4c37d179",
+    "url": "https://cdn.modrinth.com/data/onSQdWhM/versions/ItqBu87J/libIPN-fabric-1.18.2-2.0.3.jar"
+  },
+  {
+    "file": "modmenu-3.2.3.jar",
+    "sha256": "e577b5403d41c7c9515ee7cf45752d3b856a6bb96d6b937760df3fad483dbc18",
+    "url": "https://cdn.modrinth.com/data/mOgUt4GM/versions/3.2.3/modmenu-3.2.3.jar"
+  },
+  {
+    "file": "Patchouli-1.18.2-71.1-FABRIC.jar",
+    "sha256": "bdc63fbe6c35bac32875eb73020653ed33a303599c2a24c7de7c5efcd2a227be",
+    "url": "https://cdn.modrinth.com/data/nU0bVIaL/versions/1.18.2-71.1-fabric/Patchouli-1.18.2-71.1-FABRIC.jar"
+  },
+  {
+    "file": "rhino-fabric-1802.2.1-build.255.jar",
+    "sha256": "8f40c6dbc9512f7cff9a465d5c73e637a860956d1eb28844c70086bb48177301",
+    "url": "https://cdn.modrinth.com/data/sk9knFPE/versions/bsrlks7Z/rhino-fabric-1802.2.1-build.255.jar"
+  },
+  {
+    "file": "RoughlyEnoughItems-8.3.631.jar",
+    "sha256": "e942c06ef796a1e9236770828f60021fa88dfaf4cc6808fd9444171de9c88ee3",
+    "url": "https://cdn.modrinth.com/data/nfn13YXA/versions/EE3mVtfF/RoughlyEnoughItems-8.3.631.jar"
+  },
+  {
+    "file": "sodium-fabric-mc1.18.2-0.4.1+build.15.jar",
+    "sha256": "776fb3cd8c8ddee898eb1d9dc88a72d899aaa8792f21914b39ad990cea253784",
+    "url": "https://cdn.modrinth.com/data/AANobbMI/versions/mc1.18.2-0.4.1/sodium-fabric-mc1.18.2-0.4.1%2Bbuild.15.jar"
+  },
+  {
+    "file": "tenshilib-1.18.2-1.7.3-fabric.jar",
+    "sha256": "279f73f664c20234c8bbd653761fe9f2265d5b947756a8108e46eee3f7682277",
+    "url": "https://cdn.modrinth.com/data/P2rffivS/versions/JHAWI0cH/tenshilib-1.18.2-1.7.3-fabric.jar"
+  },
+  {
+    "file": "travelers-backpack-1.18.2-7.1.20.jar",
+    "sha256": "8d19f0a5a857f5408e563446d330a20ae8f96c111751b038723b87c0525e6884",
+    "url": "https://edge.forgecdn.net/files/4439/677/travelers-backpack-1.18.2-7.1.20.jar"
+  },
+  {
+    "file": "trinkets-3.3.1.jar",
+    "sha256": "985920fe4affcd9c1e998eff1a0e63ce38e8ab869f1c14376742125d65c48108",
+    "url": "https://cdn.modrinth.com/data/5aaWibi9/versions/3.3.1/trinkets-3.3.1.jar"
+  },
+  {
+    "file": "emi-0.7.3+1.18.2.jar",
+    "sha256": "63a1d4fb29847a00a6ef7720211920f277673b7674b7c7136309adb828f679d2",
+    "url": "https://cdn.modrinth.com/data/fRiHVvU7/versions/DDkCVTmY/emi-0.7.3%2B1.18.2.jar"
+  },
+  {
+    "file": "immersive_melodies-0.1.2+1.18.2-fabric.jar",
+    "sha256": "952e5acbbcc259a7b7c7b62373d2717081ced34097a3ec6f7fdec8fc527a0d1b",
+    "url": "https://cdn.modrinth.com/data/TaSmHw8V/versions/4vg3ftle/immersive_melodies-0.1.2%2B1.18.2-fabric.jar"
+  },
+  {
+    "file": "jei-1.18.2-fabric-10.2.1.1002.jar",
+    "sha256": "5ca74a70f013c00188a765508f8fab6dd93cd68865ebb3298a9510eeca3388da",
+    "url": "https://cdn.modrinth.com/data/u6dRKJwZ/versions/NVuQhfP5/jei-1.18.2-fabric-10.2.1.1002.jar"
+  },
+  {
+    "file": "simplehats-fabric-1.18.2-0.3.2.jar",
+    "sha256": "93d1624f5700a010989a58a5947afeb408d5780db47a2c818cc67a6c0bea5970",
+    "url": "https://cdn.modrinth.com/data/iSkQCp6b/versions/plTyWgqg/simplehats-fabric-1.18.2-0.3.2.jar"
+  },
+  {
+    "file": "porting_lib-1.2.1451-beta+1.18.2.jar",
+    "sha256": "486957aed18ee40aa337ede86bf527ebd4451b1ca5fc24ecc13fa000a1cf4cac",
+    "url": "https://cdn.modrinth.com/data/tEJPA4Ty/versions/WtG6ZFxI/porting_lib-1.2.1451-beta%2B1.18.2.jar",
+    "required": true
+  },
+  {
+    "file": "tacz-refabricated-1.0.0-forge1.2.0+mc1.20.1.jar",
+    "sha256": "0f7cb9eaa66d4fb912febf6413513f479c42c6d7be9d54f53e72974eabe5a154",
+    "url": "https://raw.githubusercontent.com/Sh1roCu/TouhouLittleMaid-Orihime/a1c28d57178c980da8e531ff0e09197ffe3cd6d2/libs/tacz-refabricated-1.0.0-forge1.2.0%2Bmc1.20.1.jar",
+    "packages": [
+      "com/tacz/guns/",
+      "cn/sh1rocu/tacz/"
+    ]
+  },
+  {
+    "file": "superbwarfare-fabric-0.0.1-forge0.8.7.jar",
+    "sha256": "7c274da100509aac8824d5e6cb00b786d0ccc5b5546830b5a5490ff1c1eab0e7",
+    "url": "https://raw.githubusercontent.com/Sh1roCu/TouhouLittleMaid-Orihime/a1c28d57178c980da8e531ff0e09197ffe3cd6d2/libs/superbwarfare-fabric-0.0.1-forge0.8.7.jar",
+    "packages": [
+      "com/atsuishio/superbwarfare/",
+      "cn/sh1rocu/superbwarfare/"
+    ]
+  },
+  {
+    "file": "SlashBlade-Refabricated-1.20.1-0.0.6.jar",
+    "sha256": "d399b362cb046aecf4990cc32020e0f719142ec28bb4d883e18eabe4766a3abc",
+    "url": "https://raw.githubusercontent.com/Sh1roCu/TouhouLittleMaid-Orihime/a1c28d57178c980da8e531ff0e09197ffe3cd6d2/libs/SlashBlade-Refabricated-1.20.1-0.0.6.jar",
+    "packages": [
+      "mods/flammpfeil/slashblade/",
+      "cn/sh1rocu/slashblade/"
+    ]
+  },
+  {
+    "file": "accessories-fabric-1.0.0-beta.47+1.20.1.jar",
+    "sha256": "c01993a1979b9c175219e89ad946873efd85ddf67fd91bea818797c557d8a893",
+    "url": "https://cdn.modrinth.com/data/jtmvUHXj/versions/BmhkZr5J/accessories-fabric-1.0.0-beta.47%2B1.20.1.jar",
+    "packages": [
+      "io/wispforest/accessories/"
+    ]
+  },
+  {
+    "file": "sophisticatedbackpacks-1.20.1-3.23.4.4.105.jar",
+    "sha256": "c96a83a65f352f16b23f92c2778aee1a289b810e8a791f0e1628383bf847356c",
+    "url": "https://cdn.modrinth.com/data/ouNrBQtq/versions/53tSpjtW/sophisticatedbackpacks-1.20.1-3.23.4.4.105.jar",
+    "packages": [
+      "net/p3pp3rf1y/sophisticatedbackpacks/"
+    ]
+  },
+  {
+    "file": "sophisticatedcore-1.20.1-1.2.7.10.159.jar",
+    "sha256": "26c68d08552d98c982c598ef9ef70226e64caf9c934c4269e50f41f1fa9fb466",
+    "url": "https://cdn.modrinth.com/data/9jxwkYQL/versions/T8bJQfWs/sophisticatedcore-1.20.1-1.2.7.10.159.jar",
+    "packages": [
+      "net/p3pp3rf1y/sophisticatedcore/",
+      "net/p3pp3rf1y/porting_lib/",
+      "io/github/fabricators_of_create/porting_lib/transfer/item/"
+    ]
+  },
+  {
+    "file": "JustMoreCakes-fabric-1.20.1-1.18.1.jar",
+    "sha256": "55fdffc2f5767ae6d5e110aa70ea41ab76ab9c54faa77d24aaf9f344cbff2f97",
+    "url": "https://cdn.modrinth.com/data/RW7zragP/versions/iuI5Vel0/JustMoreCakes-fabric-1.20.1-1.18.1.jar",
+    "packages": [
+      "einstein/jmc/"
+    ]
+  },
+  {
+    "file": "IronChests-2.0.2.jar",
+    "sha256": "2759c118f8aaf109fde2e41a5a2cd363bdda9e65289177241e4431efc77a6cdf",
+    "url": "https://cdn.modrinth.com/data/7mHyGgvW/versions/SfuEdZgi/IronChests-2.0.2.jar",
+    "packages": [
+      "anner/ironchest/"
+    ]
+  },
+  {
+    "file": "PatPat-1.2.1+1.20.1.jar",
+    "sha256": "6e47c1a84fe092a33e5a67e2ec4856487fcba897f541050a8f70268eb947c0c0",
+    "url": "https://cdn.modrinth.com/data/dw7LChq9/versions/BxngziNz/PatPat-1.2.1%2B1.20.1.jar",
+    "packages": [
+      "net/lopymine/patpat/"
+    ]
+  },
+  {
+    "file": "carryon-fabric-1.20.1-2.1.2.7.jar",
+    "sha256": "8d25fb164fc4cc15cd9123a915c880c55527efe3fec26b2c7febf09e65c6ebdd",
+    "url": "https://cdn.modrinth.com/data/joEfVgkn/versions/Mkla4B3q/carryon-fabric-1.20.1-2.1.2.7.jar",
+    "packages": [
+      "tschipp/carryon/common/config/"
+    ]
+  },
+  {
+    "file": "kaleidoscopecookery-1.2.0-fabric+mc1.20.1.jar",
+    "sha256": "7d41483a598e8337a02a1fd1033b6b450015a2016d49705a81d7d232ae76149e",
+    "url": "https://cdn.modrinth.com/data/Ct11Kuii/versions/6HZZVOwB/kaleidoscopecookery-1.2.0-fabric%2Bmc1.20.1.jar",
+    "packages": [
+      "com/github/ysbbbbbb/kaleidoscopecookery/"
+    ]
+  },
+  {
+    "file": "Ponder-Fabric-1.20.1-1.0.83.jar",
+    "sha256": "0d265f4b3a980f1b5a6e5d0236b5d6c4f88c7580105f425bc0480a417c8a2406",
+    "url": "https://maven.createmod.net/net/createmod/ponder/Ponder-Fabric-1.20.1/1.0.83/Ponder-Fabric-1.20.1-1.0.83.jar",
+    "packages": [
+      "net/createmod/ponder/"
+    ]
+  }
+]

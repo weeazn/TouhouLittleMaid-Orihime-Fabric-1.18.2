@@ -1,0 +1,90 @@
+{
+  "minecraft": "1.18.2",
+  "fabricLoader": "0.16.13",
+  "otherPackModJarsWithMatchingSHA256": 352,
+  "releaseSha256": "e31e56a525458ea3399ab68f53661dc61376b8448194c6b52f68d5fab2c8353e",
+  "rebuiltFromSourceArchiveSha256": "e31e56a525458ea3399ab68f53661dc61376b8448194c6b52f68d5fab2c8353e",
+  "sourceArchiveSha256": "75028efbb3bd0581232984b044d2c1319afaa42623241262222cc152febf8e09",
+  "newDeath": {
+    "favorAtDeath": 71,
+    "uuid": "39207e59-b899-4122-baf5-2d621dfb5604",
+    "shrinePos": 824633720777,
+    "model": "touhou_little_maid:himemushi_momoyo",
+    "clientTooltip": [
+      "胶片",
+      "女仆名字：Film test - Aoi",
+      "皮肤：touhou_little_maid:himemushi_momoyo",
+      "好感度：71",
+      "将胶片放入神龛，再空手右击神龛复活女仆。",
+      "§9§oTouhou Little Maid: Orihime"
+    ],
+    "missingSkinTooltip": [
+      "胶片",
+      "女仆名字：Film test - Aoi",
+      "皮肤：uninstalled_skin:aoi",
+      "好感度：71",
+      "将胶片放入神龛，再空手右击神龛复活女仆。",
+      "§9§oTouhou Little Maid: Orihime"
+    ],
+    "helmetReturned": 1,
+    "emeraldsReturned": 7,
+    "clientClickedTombstone": true,
+    "passed": true,
+    "jarSha256": "e31e56a525458ea3399ab68f53661dc61376b8448194c6b52f68d5fab2c8353e",
+    "world": "maid-restart-i8lcc5wa"
+  },
+  "newRevival": {
+    "shrineRevivedUUID": "39207e59-b899-4122-baf5-2d621dfb5604",
+    "owner": "ad41ca6d-948b-43a7-8a7e-1658ed3ecd31",
+    "name": "Film test - Aoi",
+    "favorability": 71,
+    "survivalHealthAfterSuccess": 0.25,
+    "duplicateBlankMalformedAndLowHealthSafe": true,
+    "altarRevivedUUID": "39207e59-b899-4122-baf5-2d621dfb5604",
+    "altarPowerAfterSuccess": 0.5,
+    "passed": true,
+    "jarSha256": "e31e56a525458ea3399ab68f53661dc61376b8448194c6b52f68d5fab2c8353e",
+    "world": "maid-restart-i8lcc5wa"
+  },
+  "previousDeath": {
+    "favorAtDeath": 71,
+    "uuid": "142e0ef3-907e-4faf-8cfe-65e7aaa2445e",
+    "shrinePos": 1374389538761,
+    "model": "touhou_little_maid:yorigami_jyoon",
+    "clientTooltip": [
+      "胶片",
+      "§9§oTouhou Little Maid: Orihime"
+    ],
+    "missingSkinTooltip": [
+      "胶片",
+      "§9§oTouhou Little Maid: Orihime"
+    ],
+    "helmetReturned": 1,
+    "emeraldsReturned": 7,
+    "clientClickedTombstone": true,
+    "passed": true,
+    "jarSha256": "e25adc6f3ccd7da86e23799cdead595b4d894b743dc5f21e41e8db7b43fe0249",
+    "world": "maid-restart-t3x7rj59"
+  },
+  "previousFilmReadByNewVersion": {
+    "reopenedFilmTooltip": [
+      "胶片",
+      "女仆名字：Film test - Aoi",
+      "皮肤：touhou_little_maid:yorigami_jyoon",
+      "好感度：71",
+      "将胶片放入神龛，再空手右击神龛复活女仆。",
+      "§9§oTouhou Little Maid: Orihime"
+    ],
+    "shrineRevivedUUID": "142e0ef3-907e-4faf-8cfe-65e7aaa2445e",
+    "owner": "ad41ca6d-948b-43a7-8a7e-1658ed3ecd31",
+    "name": "Film test - Aoi",
+    "favorability": 71,
+    "survivalHealthAfterSuccess": 0.25,
+    "duplicateBlankMalformedAndLowHealthSafe": true,
+    "altarRevivedUUID": "142e0ef3-907e-4faf-8cfe-65e7aaa2445e",
+    "altarPowerAfterSuccess": 0.5,
+    "passed": true,
+    "jarSha256": "e31e56a525458ea3399ab68f53661dc61376b8448194c6b52f68d5fab2c8353e",
+    "world": "maid-restart-t3x7rj59"
+  }
+}

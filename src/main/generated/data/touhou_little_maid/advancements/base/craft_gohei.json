@@ -1,0 +1,43 @@
+{
+  "criteria": {
+    "craft_hakurei_gohei": {
+      "conditions": {
+        "event": "craft_hakurei_gohei"
+      },
+      "trigger": "touhou_little_maid:maid/tamed_maid"
+    },
+    "craft_sanae_gohei": {
+      "conditions": {
+        "event": "craft_sanae_gohei"
+      },
+      "trigger": "touhou_little_maid:maid/tamed_maid"
+    }
+  },
+  "display": {
+    "announce_to_chat": true,
+    "background": "touhou_little_maid:textures/advancements/backgrounds/stone.png",
+    "description": {
+      "translate": "advancements.touhou_little_maid.base.craft_gohei.description"
+    },
+    "frame": "task",
+    "hidden": false,
+    "icon": {
+      "item": "touhou_little_maid:hakurei_gohei",
+      "nbt": "{Damage:0}"
+    },
+    "show_toast": true,
+    "title": {
+      "translate": "advancements.touhou_little_maid.base.craft_gohei.title"
+    }
+  },
+  "requirements": [
+    [
+      "craft_hakurei_gohei",
+      "craft_sanae_gohei"
+    ]
+  ],
+  "rewards": {
+    "experience": 50
+  },
+  "sends_telemetry_event": true
+}

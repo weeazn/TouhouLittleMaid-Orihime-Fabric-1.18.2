@@ -1,0 +1,14 @@
+{
+  "replace": false,
+  "values": [
+    "minecraft:arrow",
+    "minecraft:trident",
+    "minecraft:mob_projectile",
+    "minecraft:unattributed_fireball",
+    "minecraft:fireball",
+    "minecraft:wither_skull",
+    "minecraft:thrown",
+    "touhou_little_maid:legacy_projectile",
+    "touhou_little_maid:danmaku"
+  ]
+}

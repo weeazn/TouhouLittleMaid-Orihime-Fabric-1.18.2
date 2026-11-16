@@ -1,0 +1,55 @@
+package com.github.tartaricacid.touhoulittlemaid.client.gui.widget.button;
+
+import cn.sh1rocu.touhoulittlemaid.client.MaidGui;
+import com.mojang.blaze3d.vertex.PoseStack;
+import com.github.tartaricacid.touhoulittlemaid.TouhouLittleMaid;
+import com.github.tartaricacid.touhoulittlemaid.network.message.SetBeaconPotionMessage;
+import com.github.tartaricacid.touhoulittlemaid.tileentity.TileEntityMaidBeacon;
+import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
+import net.fabricmc.fabric.api.client.screen.v1.Screens;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.client.renderer.texture.TextureAtlasSprite;
+import net.minecraft.core.BlockPos;
+import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceLocation;
+
+import java.util.function.Consumer;
+
+public class BeaconEffectButton extends TouhouStateSwitchButton {
+    private static final ResourceLocation BG = new ResourceLocation(TouhouLittleMaid.MOD_ID, "textures/gui/maid_beacon.png");
+    private final TextureAtlasSprite sprite;
+    private final Component tooltips;
+    private final int potionIndex;
+    private final BlockPos pos;
+    private final Consumer<Boolean> onClick;
+
+    public BeaconEffectButton(TileEntityMaidBeacon.BeaconEffect effect, int xIn, int yIn, int potionIndex, TileEntityMaidBeacon beacon, Consumer<Boolean> onClick) {
+        super(xIn, yIn, 22, 22, potionIndex == effect.ordinal());
+        this.initTextureValues(0, 111, 22, 22, BG);
+        this.sprite = Minecraft.getInstance().getMobEffectTextures().get(effect.getEffect());
+        this.tooltips = effect.getEffect().getDisplayName();
+        this.potionIndex = effect.ordinal();
+        this.pos = beacon.getBlockPos();
+        this.onClick = onClick;
+    }
+
+    @Override
+    public void onClick(double mouseX, double mouseY) {
+        this.isStateTriggered = !this.isStateTriggered;
+        ClientPlayNetworking.send(SetBeaconPotionMessage.ID, SetBeaconPotionMessage.encode(pos, isStateTriggered ? potionIndex : -1));
+        this.onClick.accept(this.isStateTriggered);
+    }
+
+    @Override
+    public void renderButton(PoseStack graphics, int mouseX, int mouseY, float partialTicks) {
+        super.renderButton(graphics, mouseX, mouseY, partialTicks);
+        MaidGui.blit(graphics, this.x + 2, this.y + 2, 0, 18, 18, this.sprite);
+    }
+
+    public void renderToolTip(PoseStack graphics, Screen screen, int pMouseX, int pMouseY) {
+        if (this.isHovered) {
+            MaidGui.tooltip(graphics, Screens.getClient(screen).font, tooltips, pMouseX, pMouseY);
+        }
+    }
+}

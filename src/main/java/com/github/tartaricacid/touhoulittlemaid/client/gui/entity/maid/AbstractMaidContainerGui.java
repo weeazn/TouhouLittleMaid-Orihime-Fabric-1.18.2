@@ -1,0 +1,751 @@
+package com.github.tartaricacid.touhoulittlemaid.client.gui.entity.maid;
+
+import cn.sh1rocu.touhoulittlemaid.client.MaidGui;
+import com.mojang.blaze3d.vertex.PoseStack;
+import net.minecraft.network.chat.TranslatableComponent;
+import net.minecraft.network.chat.TextComponent;
+import cn.sh1rocu.touhoulittlemaid.mixin.accessor.ScreenAccessor;
+import com.github.tartaricacid.touhoulittlemaid.TouhouLittleMaid;
+import com.github.tartaricacid.touhoulittlemaid.api.client.gui.ITooltipButton;
+import com.github.tartaricacid.touhoulittlemaid.api.event.MaidTaskEnableEvent;
+import com.github.tartaricacid.touhoulittlemaid.api.event.client.MaidContainerGuiEvent;
+import com.github.tartaricacid.touhoulittlemaid.api.task.IMaidTask;
+import com.github.tartaricacid.touhoulittlemaid.client.gui.entity.cache.CacheIconManager;
+import com.github.tartaricacid.touhoulittlemaid.client.gui.sound.MaidSoundPackGui;
+import com.github.tartaricacid.touhoulittlemaid.client.gui.widget.button.*;
+import com.github.tartaricacid.touhoulittlemaid.client.resource.CustomPackLoader;
+import com.github.tartaricacid.touhoulittlemaid.compat.ipn.SortButtonScreen;
+import com.github.tartaricacid.touhoulittlemaid.compat.ysm.YsmCompat;
+import com.github.tartaricacid.touhoulittlemaid.compat.ysm.event.OpenYsmMaidScreenEvent;
+import com.github.tartaricacid.touhoulittlemaid.entity.ai.brain.MaidGomokuAI;
+import com.github.tartaricacid.touhoulittlemaid.entity.favorability.FavorabilityManager;
+import com.github.tartaricacid.touhoulittlemaid.entity.passive.EntityMaid;
+import com.github.tartaricacid.touhoulittlemaid.entity.task.TaskManager;
+import com.github.tartaricacid.touhoulittlemaid.inventory.container.AbstractMaidContainer;
+import com.github.tartaricacid.touhoulittlemaid.network.message.MaidConfigMessage;
+import com.github.tartaricacid.touhoulittlemaid.network.message.MaidTaskMessage;
+import com.github.tartaricacid.touhoulittlemaid.network.message.RequestEffectMessage;
+import com.github.tartaricacid.touhoulittlemaid.network.message.SendEffectMessage;
+import com.github.tartaricacid.touhoulittlemaid.util.ParseI18n;
+import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
+import com.mojang.blaze3d.systems.RenderSystem;
+import com.mojang.datafixers.util.Pair;
+import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
+import net.fabricmc.fabric.api.client.screen.v1.Screens;
+import net.fabricmc.loader.api.FabricLoader;
+import net.minecraft.ChatFormatting;
+import net.minecraft.SharedConstants;
+import net.minecraft.client.gui.components.AbstractWidget;
+import net.minecraft.client.gui.components.ImageButton;
+import net.minecraft.client.gui.components.StateSwitchingButton;
+import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
+import net.minecraft.client.renderer.Rect2i;
+import net.minecraft.client.resources.language.I18n;
+import net.minecraft.network.chat.CommonComponents;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.MutableComponent;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.util.FormattedCharSequence;
+import net.minecraft.util.StringUtil;
+import net.minecraft.world.entity.ai.attributes.Attributes;
+import net.minecraft.world.entity.player.Inventory;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Nullable;
+import java.text.DecimalFormat;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.function.Predicate;
+import static com.github.tartaricacid.touhoulittlemaid.util.GuiTools.NO_ACTION;
+
+public abstract class AbstractMaidContainerGui<T extends AbstractMaidContainer> extends AbstractContainerScreen<T> {
+    private static final ResourceLocation BG = new ResourceLocation(TouhouLittleMaid.MOD_ID, "textures/gui/maid_gui_main.png");
+    private static final ResourceLocation SIDE = new ResourceLocation(TouhouLittleMaid.MOD_ID, "textures/gui/maid_gui_side.png");
+    private static final ResourceLocation BUTTON = new ResourceLocation(TouhouLittleMaid.MOD_ID, "textures/gui/maid_gui_button.png");
+    private static final ResourceLocation TASK = new ResourceLocation(TouhouLittleMaid.MOD_ID, "textures/gui/maid_gui_task.png");
+
+    private static final DecimalFormat DECIMAL_FORMAT = new DecimalFormat("00");
+
+    private static final int TASK_COUNT_PER_PAGE = 12;
+    private static int TASK_PAGE = 0;
+    private static boolean TASK_LIST_OPEN = false;
+
+    protected final EntityMaid maid;
+    protected final IMaidTask task;
+    /**
+     * 非隐藏的任务列表，用于任务切换按钮显示
+     */
+    protected final List<IMaidTask> notHiddenTasks;
+
+    /**
+     * 事件系统添加的额外按钮
+     */
+    private final Map<String, AbstractWidget> eventAddButtons = Maps.newHashMap();
+
+    private StateSwitchingButton home;
+    private StateSwitchingButton pick;
+    private StateSwitchingButton ride;
+    private ImageButton info;
+    private ImageButton skin;
+    private @Nullable ImageButton ysmSkin;
+    private ImageButton sound;
+    private ImageButton pageDown;
+    private ImageButton pageUp;
+    private ImageButton pageClose;
+    private ImageButton taskSwitch;
+    private MaidDownloadButton modelDownload;
+    private ScheduleButton<T> scheduleButton;
+
+    private int counterTime = 0;
+
+    public AbstractMaidContainerGui(T screenContainer, Inventory inv, Component titleIn) {
+        super(screenContainer, inv, titleIn);
+        this.imageHeight = 256;
+        this.imageWidth = 256;
+        this.maid = menu.getMaid();
+        this.task = menu.getMaid().getTask();
+        this.notHiddenTasks = TaskManager.getNotHiddenTaskList(this.maid);
+    }
+
+    @Override
+    protected void clearWidgets() {
+        super.clearWidgets();
+        this.eventAddButtons.clear();
+    }
+
+    @Override
+    public void init() {
+        super.init();
+        // fixme: https://github.com/TartaricAcid/TouhouLittleMaid/issues/416
+        // 临时修复，应该采用更好的办法！
+        if (this.maid == null) {
+            return;
+        }
+        // 清除当前 Gui 的各种 Widgets
+        this.clearWidgets();
+        // 初始化基础 Data
+        this.initBaseData();
+        // 初始化额外 Data
+        this.initAdditionData();
+        // 初始化各种 Widgets
+        this.initBaseWidgets();
+        // 初始化额外 Widgets
+        this.initAdditionWidgets();
+        // 事件系统，用于其他模型添加额外的按钮
+        MaidContainerGuiEvent.Init event = new MaidContainerGuiEvent.Init(this, leftPos, topPos, this.eventAddButtons);
+        MaidContainerGuiEvent.INIT.invoker().onInit(event);
+        this.eventAddButtons.values().forEach(this::addRenderableWidget);
+    }
+
+    protected void initBaseData() {
+    }
+
+    protected void initAdditionData() {
+    }
+
+    protected void initBaseWidgets() {
+        this.addHomeButton();
+        this.addPickButton();
+        this.addRideButton();
+        this.addDownloadButton();
+        this.addStateButton();
+        this.addTaskSwitchButton();
+        this.addTaskControlButton();
+        this.addTaskListButton();
+        this.addScheduleButton();
+        this.addTabsButton();
+        this.addSideTabsButton();
+    }
+
+    protected void initAdditionWidgets() {
+    }
+
+    @Override
+    @SuppressWarnings("all")
+    public void render(PoseStack graphics, int mouseX, int mouseY, float partialTicks) {
+        // fixme: https://github.com/TartaricAcid/TouhouLittleMaid/issues/416
+        // 临时修复，应该采用更好的办法！
+        if (this.maid == null) {
+            return;
+        }
+        this.drawModInfo(graphics);
+        super.render(graphics, mouseX, mouseY, partialTicks);
+        this.drawEffectInfo(graphics);
+        this.drawCurrentTaskText(graphics);
+        this.renderAddition(graphics, mouseX, mouseY, partialTicks);
+        MaidContainerGuiEvent.Render renderEvent = new MaidContainerGuiEvent.Render(this, leftPos, topPos,
+                this.eventAddButtons, graphics, mouseX, mouseY, partialTicks);
+        MaidContainerGuiEvent.RENDER.invoker().onRender(renderEvent);
+        // 确保 Tooltip 是最后渲染的
+        this.renderTooltip(graphics, mouseX, mouseY);
+        MaidContainerGuiEvent.Tooltip tooltipEvent = new MaidContainerGuiEvent.Tooltip(this, leftPos, topPos,
+                this.eventAddButtons, graphics, mouseX, mouseY, partialTicks);
+        MaidContainerGuiEvent.TOOLTIP.invoker().onTooltip(tooltipEvent);
+    }
+
+    // 其他的渲染
+    protected void renderAddition(PoseStack graphics, int mouseX, int mouseY, float partialTicks) {
+    }
+
+    // 增加一些额外信息，通过截图就能方便作者检查错误
+    @SuppressWarnings("all")
+    private void drawModInfo(PoseStack graphics) {
+        String minecraftVersion = SharedConstants.getCurrentVersion().getName();
+        String modVersion = FabricLoader.getInstance().getModContainer(TouhouLittleMaid.MOD_ID).orElseThrow().getMetadata().getVersion().getFriendlyString();
+        String debugInfo = String.format("%s-%s", minecraftVersion, modVersion);
+        MaidGui.drawCenteredString(graphics, font, debugInfo, leftPos + 80 / 2, topPos - 4, ChatFormatting.GRAY.getColor());
+    }
+
+    @SuppressWarnings("all")
+    private void drawEffectInfo(PoseStack graphics) {
+        if (TASK_LIST_OPEN) {
+            return;
+        }
+        List<SendEffectMessage.EffectData> effects = maid.getEffects();
+        if (!effects.isEmpty()) {
+            int yOffset = 5;
+            for (SendEffectMessage.EffectData effect : effects) {
+                MutableComponent text = new TranslatableComponent(effect.descriptionId);
+                if (effect.amplifier >= 1 && effect.amplifier <= 9) {
+                    MutableComponent levelText = new TranslatableComponent("enchantment.level." + (effect.amplifier + 1));
+                    text = text.append(new net.minecraft.network.chat.TextComponent(" ")).append(levelText);
+                }
+                String duration;
+                if (effect.duration == -1) {
+                    duration = I18n.get("effect.duration.infinite");
+                } else {
+                    duration = StringUtil.formatTickDuration(effect.duration);
+                }
+                text = text.append(new net.minecraft.network.chat.TextComponent(" ")).append(duration);
+                MaidGui.text(graphics, font, text, leftPos - font.width(text) - 3, topPos + yOffset + 5, getPotionColor(effect.category));
+                yOffset += 10;
+            }
+        }
+    }
+
+    @SuppressWarnings("all")
+    private int getPotionColor(int category) {
+        switch (category) {
+            case 0:
+                return ChatFormatting.GREEN.getColor();
+            case 1:
+                return ChatFormatting.RED.getColor();
+            default:
+                return ChatFormatting.BLUE.getColor();
+        }
+    }
+
+    @Override
+    protected void renderBg(PoseStack graphics, float partialTicks, int x, int y) {
+        graphics.translate(0, 0, -100);
+        renderBackground(graphics);
+        MaidGui.texture(graphics, BG, leftPos, topPos, 0, 0, imageWidth, imageHeight);
+        SortButtonScreen.renderBackground(graphics, leftPos + 249, topPos + 166);
+        this.drawMaidCharacter(graphics, x, y);
+        this.drawBaseInfoGui(graphics);
+        this.drawTaskListBg(graphics);
+        this.drawSideTabGui(graphics, partialTicks, x, y);
+    }
+
+    @Override
+    protected void renderTooltip(PoseStack graphics, int x, int y) {
+        super.renderTooltip(graphics, x, y);
+        renderTransTooltip(home, graphics, x, y, "gui.touhou_little_maid.button.home");
+        renderTransTooltip(pick, graphics, x, y, "gui.touhou_little_maid.button.pickup");
+        renderTransTooltip(ride, graphics, x, y, "gui.touhou_little_maid.button.maid_riding_set");
+        renderTransTooltip(modelDownload, graphics, x, y, "gui.touhou_little_maid.button.model_download");
+        renderTransTooltip(skin, graphics, x, y, "gui.touhou_little_maid.button.skin");
+        if (ysmSkin != null) {
+            renderTransTooltip(ysmSkin, graphics, x, y, "gui.touhou_little_maid.button.ysm_skin");
+        }
+        renderTransTooltip(sound, graphics, x, y, "gui.touhou_little_maid.button.sound");
+        renderTransTooltip(pageUp, graphics, x, y, "gui.touhou_little_maid.task.previous_page");
+        renderTransTooltip(pageDown, graphics, x, y, "gui.touhou_little_maid.task.next_page");
+        renderTransTooltip(pageClose, graphics, x, y, "gui.touhou_little_maid.task.close");
+        renderTransTooltip(taskSwitch, graphics, x, y, "gui.touhou_little_maid.task.switch");
+        renderAdditionTransTooltip(graphics, x, y);
+        renderMaidInfo(graphics, x, y);
+        renderScheduleInfo(graphics, x, y);
+        renderTaskButtonInfo(graphics, x, y);
+        modelDownload.renderExtraTips(graphics);
+    }
+
+    // 渲染额外的 Tooltip
+    protected void renderAdditionTransTooltip(PoseStack graphics, int x, int y) {
+    }
+
+    @Override
+    protected void renderLabels(PoseStack graphics, int x, int y) {
+        this.drawTaskPageCount(graphics);
+    }
+
+    private void addStateButton() {
+        skin = new ImageButton(leftPos + 62, topPos + 14, 9, 9, 72, 43, 10, BUTTON, (b) -> CacheIconManager.openMaidModelGui(maid));
+        info = new ImageButton(leftPos + 8, topPos + 14, 9, 9, 72, 65, 10, BUTTON, NO_ACTION);
+        this.addRenderableWidget(skin);
+        this.addRenderableWidget(info);
+
+        if (YsmCompat.isInstalled()) {
+            this.ysmSkin = new ImageButton(leftPos + 52, topPos + 14, 9, 9,
+                    144, 65, 10, BUTTON,
+                    (b) -> OpenYsmMaidScreenEvent.CALLBACK.invoker().post(new OpenYsmMaidScreenEvent(maid)));
+            this.sound = new ImageButton(leftPos + 42, topPos + 14, 9, 9,
+                    144, 43, 10, BUTTON,
+                    (b) -> Screens.getClient(this).setScreen(new MaidSoundPackGui(maid)));
+
+            this.addRenderableWidget(ysmSkin);
+            this.addRenderableWidget(sound);
+        } else {
+            this.sound = new ImageButton(leftPos + 52, topPos + 14, 9, 9,
+                    144, 43, 10, BUTTON,
+                    (b) -> Screens.getClient(this).setScreen(new MaidSoundPackGui(maid)));
+            this.addRenderableWidget(sound);
+        }
+    }
+
+    private void addTaskControlButton() {
+        pageDown = new ImageButton(leftPos - 72, topPos + 9, 16, 13, 93, 0, 14, TASK, (b) -> {
+            taskPageDown();
+        });
+        pageUp = new ImageButton(leftPos - 89, topPos + 9, 16, 13, 110, 0, 14, TASK, (b) -> {
+            taskPageUp();
+        });
+        pageClose = new ImageButton(leftPos - 19, topPos + 9, 13, 13, 127, 0, 14, TASK, (b) -> {
+            TASK_LIST_OPEN = false;
+            init();
+        });
+        this.addRenderableWidget(pageUp);
+        this.addRenderableWidget(pageDown);
+        this.addRenderableWidget(pageClose);
+        pageUp.visible = TASK_LIST_OPEN;
+        pageDown.visible = TASK_LIST_OPEN;
+        pageClose.visible = TASK_LIST_OPEN;
+    }
+
+    private void taskPageUp() {
+        if (TASK_PAGE > 0) {
+            TASK_PAGE--;
+            init();
+        }
+    }
+
+    private void taskPageDown() {
+        if (TASK_PAGE * TASK_COUNT_PER_PAGE + TASK_COUNT_PER_PAGE < notHiddenTasks.size()) {
+            TASK_PAGE++;
+            init();
+        }
+    }
+
+    private void addTaskListButton() {
+        if (TASK_PAGE * TASK_COUNT_PER_PAGE >= notHiddenTasks.size()) {
+            TASK_PAGE = 0;
+        }
+        for (int count = 0; count < TASK_COUNT_PER_PAGE; count++) {
+            int index = TASK_PAGE * TASK_COUNT_PER_PAGE + count;
+            if (index < notHiddenTasks.size()) {
+                drawPerTaskButton(notHiddenTasks, count, index);
+            }
+        }
+    }
+
+    private void drawPerTaskButton(List<IMaidTask> tasks, int count, int index) {
+        final IMaidTask maidTask = tasks.get(index);
+
+        boolean[] enable = {true};
+        List<Pair<String, Predicate<EntityMaid>>> enableConditionDesc = Lists.newArrayList();
+        if (maidTask != TaskManager.getIdleTask()) {
+            MaidTaskEnableEvent event = new MaidTaskEnableEvent(maidTask, maid, enableConditionDesc);
+            MaidTaskEnableEvent.CALLBACK.invoker().onMaidTaskEnable(event);
+            if (event.isCanceled()) {
+                // 如果事件系统管控了启用条件
+                enable[0] = false;
+            } else if (!maidTask.isEnable(maid)) {
+                // 如果 task 里的条件也不启用
+                enableConditionDesc.addAll(maidTask.getEnableConditionDesc(maid));
+                enable[0] = false;
+            }
+        }
+
+        TaskButton button = new TaskButton(maidTask, enable[0], leftPos - 89, topPos + 23 + 19 * count,
+                83, 19, 93, 28, 20, TASK, 256, 256,
+                b -> taskButtonPressed(maidTask, enable[0]),
+                getTaskTooltips(maidTask, enable[0], enableConditionDesc), new TextComponent(""));
+        this.addRenderableWidget(button);
+        button.visible = TASK_LIST_OPEN;
+    }
+
+    // 用于开放切换任务时对当前 GUI 的操作
+    protected void taskButtonPressed(IMaidTask maidTask, boolean enable) {
+        if (enable && maid != null) {
+            maid.setTask(maidTask);
+            ClientPlayNetworking.send(MaidTaskMessage.ID, MaidTaskMessage.encode(maid.getId(), maidTask.getUid()));
+        }
+    }
+
+    private List<Component> getTaskTooltips(IMaidTask maidTask, boolean enable, List<Pair<String, Predicate<EntityMaid>>> enableConditionDesc) {
+        List<Component> desc = ParseI18n.keysToTrans(maidTask.getDescription(maid), ChatFormatting.GRAY);
+        if (!desc.isEmpty()) {
+            desc.add(0, new TranslatableComponent("task.touhou_little_maid.desc.title").withStyle(ChatFormatting.GOLD));
+        }
+        if (!enable) {
+            // 强制显示启用条件提示
+            desc.add(new TextComponent("\u0020"));
+            desc.add(new TranslatableComponent("task.touhou_little_maid.desc.enable_condition").withStyle(ChatFormatting.GOLD));
+
+            for (Pair<String, Predicate<EntityMaid>> line : enableConditionDesc) {
+                MutableComponent prefix = new TextComponent("-\u0020");
+                String key = String.format("task.%s.%s.enable_condition.%s", maidTask.getUid().getNamespace(), maidTask.getUid().getPath(), line.getFirst());
+                MutableComponent condition = new TranslatableComponent(key);
+                if (line.getSecond().test(maid)) {
+                    condition.withStyle(ChatFormatting.GREEN);
+                } else {
+                    condition.withStyle(ChatFormatting.RED);
+                }
+                desc.add(prefix.append(condition));
+            }
+        }
+        List<Pair<String, Predicate<EntityMaid>>> conditions = maidTask.getConditionDescription(maid);
+        if (!conditions.isEmpty()) {
+            desc.add(new TextComponent("\u0020"));
+            desc.add(new TranslatableComponent("task.touhou_little_maid.desc.condition").withStyle(ChatFormatting.GOLD));
+        }
+        for (Pair<String, Predicate<EntityMaid>> line : conditions) {
+            MutableComponent prefix = new TextComponent("-\u0020");
+            String key = String.format("task.%s.%s.condition.%s", maidTask.getUid().getNamespace(), maidTask.getUid().getPath(), line.getFirst());
+            MutableComponent condition = new TranslatableComponent(key);
+            if (line.getSecond().test(maid)) {
+                condition.withStyle(ChatFormatting.GREEN);
+            } else {
+                condition.withStyle(ChatFormatting.RED);
+            }
+            desc.add(prefix.append(condition));
+        }
+        if (Screens.getClient(this).options.advancedItemTooltips) {
+            desc.add(new net.minecraft.network.chat.TextComponent(" "));
+            desc.add(new TranslatableComponent("task.touhou_little_maid.advanced.id", maidTask.getUid().getPath()).withStyle(ChatFormatting.DARK_GRAY));
+        }
+        return desc;
+    }
+
+    private void addScheduleButton() {
+        scheduleButton = new ScheduleButton<>(leftPos + 9, topPos + 187, this);
+        this.addRenderableWidget(scheduleButton);
+    }
+
+    private void addTabsButton() {
+        MaidTabs<T> maidTabs = new MaidTabs<>(maid.getId(), leftPos, topPos);
+        MaidTabButton[] tabs = maidTabs.getTabs(this);
+        for (MaidTabButton button : tabs) {
+            this.addRenderableWidget(button);
+        }
+    }
+
+    private void addTaskSwitchButton() {
+        taskSwitch = new ImageButton(leftPos + 4, topPos + 159, 71, 21, 0, 42, 22, BUTTON, (b) -> {
+            TASK_LIST_OPEN = !TASK_LIST_OPEN;
+            init();
+        });
+        this.addRenderableWidget(taskSwitch);
+    }
+
+    private void addRideButton() {
+        ride = new StateSwitchingButton(leftPos + 51, topPos + 206, 20, 20, maid.isRideable()) {
+            @Override
+            public void onClick(double mouseX, double mouseY) {
+                this.isStateTriggered = !this.isStateTriggered;
+                ClientPlayNetworking.send(MaidConfigMessage.ID, MaidConfigMessage.encode(maid.getId(), maid.isHomeModeEnable(), maid.isPickup(), isStateTriggered, maid.getSchedule()));
+            }
+        };
+        ride.initTextureValues(84, 0, 21, 21, BUTTON);
+        this.addRenderableWidget(ride);
+    }
+
+    private void addPickButton() {
+        pick = new StateSwitchingButton(leftPos + 30, topPos + 206, 20, 20, maid.isPickup()) {
+            @Override
+            public void onClick(double mouseX, double mouseY) {
+                this.isStateTriggered = !this.isStateTriggered;
+                ClientPlayNetworking.send(MaidConfigMessage.ID, MaidConfigMessage.encode(maid.getId(), maid.isHomeModeEnable(), isStateTriggered, maid.isRideable(), maid.getSchedule()));
+            }
+        };
+        pick.initTextureValues(42, 0, 21, 21, BUTTON);
+        this.addRenderableWidget(pick);
+    }
+
+    private void addHomeButton() {
+        home = new StateSwitchingButton(leftPos + 9, topPos + 206, 20, 20, maid.isHomeModeEnable()) {
+            @Override
+            public void onClick(double mouseX, double mouseY) {
+                this.isStateTriggered = !this.isStateTriggered;
+                ClientPlayNetworking.send(MaidConfigMessage.ID, MaidConfigMessage.encode(maid.getId(), isStateTriggered, maid.isPickup(), maid.isRideable(), maid.getSchedule()));
+            }
+        };
+        home.initTextureValues(0, 0, 21, 21, BUTTON);
+        this.addRenderableWidget(home);
+    }
+
+    private void addDownloadButton() {
+        modelDownload = new MaidDownloadButton(leftPos + 20, topPos + 230, BUTTON, this.maid);
+        this.addRenderableWidget(modelDownload);
+    }
+
+    private void drawTaskPageCount(PoseStack graphics) {
+        if (TASK_LIST_OPEN) {
+            String text = String.format("%d/%d", TASK_PAGE + 1, (notHiddenTasks.size() - 1) / TASK_COUNT_PER_PAGE + 1);
+            MaidGui.text(graphics, font, text, -48, 12, 0x333333, false);
+        }
+    }
+
+    private void drawCurrentTaskText(PoseStack graphics) {
+        IMaidTask task = maid.getTask();
+        MaidGui.item(graphics, task.getIcon(), leftPos + 6, topPos + 161);
+        List<FormattedCharSequence> splitTexts = font.split(task.getName(), 42);
+        if (!splitTexts.isEmpty()) {
+            MaidGui.text(graphics, font, splitTexts.get(0), leftPos + 28, topPos + 165, 0x333333, false);
+        }
+    }
+
+    private void renderMaidInfo(PoseStack graphics, int mouseX, int mouseY) {
+        if (info.isMouseOver(mouseX, mouseY)) {
+            List<Component> list = Lists.newArrayList();
+            String prefix = "§a█\u0020";
+
+            MutableComponent title = new TextComponent("")
+                    .append(new TranslatableComponent("tooltips.touhou_little_maid.info.title")
+                            .withStyle(ChatFormatting.GOLD, ChatFormatting.UNDERLINE))
+                    .append(new TextComponent("§r\u0020"));
+            if (maid.isStruckByLightning()) {
+                title.append(new TextComponent("❀").withStyle(ChatFormatting.DARK_RED));
+            }
+            if (maid.isInvulnerable()) {
+                title.append(new TextComponent("✟").withStyle(ChatFormatting.BLUE));
+            }
+            list.add(title);
+
+            if (maid.getOwner() != null) {
+                list.add(new TextComponent(prefix).withStyle(ChatFormatting.WHITE)
+                        .append(new TranslatableComponent("tooltips.touhou_little_maid.info.owner")
+                                .append(":\u0020").withStyle(ChatFormatting.AQUA))
+                        .append(maid.getOwner().getDisplayName()));
+            }
+            CustomPackLoader.MAID_MODELS.getInfo(maid.getModelId()).ifPresent((info) -> list.add(new TextComponent(prefix)
+                    .withStyle(ChatFormatting.WHITE)
+                    .append(new TranslatableComponent("tooltips.touhou_little_maid.info.model_name")
+                            .append(":\u0020").withStyle(ChatFormatting.AQUA))
+                    .append(ParseI18n.parse(info.getName()))));
+            list.add(new TextComponent(prefix).withStyle(ChatFormatting.WHITE)
+                    .append(new TranslatableComponent("tooltips.touhou_little_maid.info.experience")
+                            .append(":\u0020").withStyle(ChatFormatting.AQUA))
+                    .append(String.valueOf(maid.getExperience())));
+            list.add(new TextComponent(prefix).withStyle(ChatFormatting.WHITE)
+                    .append(new TranslatableComponent("tooltips.touhou_little_maid.info.favorability")
+                            .append(":\u0020").withStyle(ChatFormatting.AQUA))
+                    .append(String.valueOf(maid.getFavorability())));
+            list.add(new TextComponent(prefix).withStyle(ChatFormatting.WHITE)
+                    .append(new TranslatableComponent("block.touhou_little_maid.gomoku")
+                            .append(":\u0020").withStyle(ChatFormatting.AQUA))
+                    .append(new TranslatableComponent("tooltips.touhou_little_maid.info.game_skill.gomoku", maid.getGameRecordManager().getGomokuWinCount(), MaidGomokuAI.getRank(maid))));
+
+            MaidGui.componentTooltip(graphics, font, list, mouseX, mouseY);
+        }
+    }
+
+    private void renderScheduleInfo(PoseStack graphics, int mouseX, int mouseY) {
+        if (scheduleButton.isMouseOver(mouseX, mouseY)) {
+            MaidGui.componentTooltip(graphics, font, scheduleButton.getTooltips(), mouseX, mouseY);
+        }
+    }
+
+    private void renderTaskButtonInfo(PoseStack graphics, int x, int y) {
+        ((ScreenAccessor) this).tlm$getRenderables().stream().filter(b -> b instanceof ITooltipButton).forEach(b -> {
+            ITooltipButton tooltipButton = (ITooltipButton) b;
+            if (tooltipButton.isTooltipHovered()) {
+                tooltipButton.renderTooltip(graphics, Screens.getClient(this), x, y);
+            }
+        });
+    }
+
+    private void drawMaidCharacter(PoseStack graphics, int x, int y) {
+        double scale = Screens.getClient(this).getWindow().getGuiScale();
+        RenderSystem.enableScissor((int) ((leftPos + 6) * scale), (int) ((topPos + 107 + 42) * scale),
+                (int) (67 * scale), (int) (95 * scale));
+        MaidGui.renderEntityInInventory(graphics, leftPos + 40, topPos + 100, 40, (leftPos + 40) - x, (topPos + 70 - 20) - y, maid);
+        RenderSystem.disableScissor();
+    }
+
+    private void drawTaskListBg(PoseStack graphics) {
+        if (TASK_LIST_OPEN) {
+            Rect2i taskListArea = getTaskListArea();
+            MaidGui.texture(graphics, TASK, taskListArea.getX(), taskListArea.getY(), 0, 0, taskListArea.getWidth(), taskListArea.getHeight());
+        }
+    }
+
+    @SuppressWarnings("all")
+    private void drawBaseInfoGui(PoseStack graphics) {
+        graphics.translate(0, 0, 200);
+        {
+            MaidGui.texture(graphics, SIDE, leftPos + 53, topPos + 113, 0, 0, 9, 9);
+            MaidGui.texture(graphics, SIDE, leftPos + 5, topPos + 113, 0, 9, 47, 9);
+            double hp = maid.getHealth() / maid.getMaxHealth();
+            MaidGui.texture(graphics, SIDE, leftPos + 7, topPos + 115, 2, 18, (int) (43 * hp), 5);
+            drawNumberScale(graphics, maid.getHealth(), leftPos + 63, topPos + 114);
+        }
+        {
+            MaidGui.texture(graphics, SIDE, leftPos + 53, topPos + 124, 9, 0, 9, 9);
+            MaidGui.texture(graphics, SIDE, leftPos + 5, topPos + 124, 0, 9, 47, 9);
+            double armor = Math.min(maid.getAttributeValue(Attributes.ARMOR) / 20, 1.0);
+            MaidGui.texture(graphics, SIDE, leftPos + 7, topPos + 126, 2, 23, (int) (43 * armor), 5);
+            drawNumberScale(graphics, maid.getArmorValue(), leftPos + 63, topPos + 125);
+        }
+        {
+            MaidGui.texture(graphics, SIDE, leftPos + 53, topPos + 135, 18, 0, 9, 9);
+            MaidGui.texture(graphics, SIDE, leftPos + 5, topPos + 135, 0, 9, 47, 9);
+
+            int exp = maid.getExperience();
+            int count = exp / 120;
+            double percent = (exp % 120) / 120.0;
+            MaidGui.texture(graphics, SIDE, leftPos + 7, topPos + 137, 2, 28, (int) (43 * percent), 5);
+            drawNumberScale(graphics, count, leftPos + 63, topPos + 136);
+        }
+        {
+            MaidGui.texture(graphics, SIDE, leftPos + 53, topPos + 146, 27, 0, 9, 9);
+            MaidGui.texture(graphics, SIDE, leftPos + 5, topPos + 146, 0, 9, 47, 9);
+            FavorabilityManager manager = maid.getFavorabilityManager();
+            double percent = manager.getLevelPercent();
+            MaidGui.texture(graphics, SIDE, leftPos + 7, topPos + 148, 2, 33, (int) (43 * percent), 5);
+            drawNumberScale(graphics, manager.getLevel(), leftPos + 63, topPos + 147);
+        }
+
+        MaidGui.texture(graphics, SIDE, leftPos + 94, topPos + 7, 107, 0, 149, 21);
+        MaidGui.texture(graphics, SIDE, leftPos + 6, topPos + 178, 0, 47, 67, 25);
+    }
+
+    @SuppressWarnings("all")
+    private void drawNumberScale(PoseStack graphics, double value, int posX, int posY) {
+        String text = formatScale((long) value);
+        graphics.pushPose();
+        graphics.scale(0.5f, 0.5f, 1);
+        MaidGui.text(graphics, font, text, posX * 2, posY * 2 + font.lineHeight / 2, ChatFormatting.DARK_GRAY.getColor(), false);
+        graphics.popPose();
+    }
+
+    /**
+     * 将数值格式化为紧凑的缩写字符串，最长 4 字符（含单位字母）。
+     * <pre>
+     * 数值范围              显示示例      最大长度
+     * 0       ~ 999        00 ~ 999      3 字符
+     * 1000    ~ 9999       1.0K ~ 9.9K   4 字符
+     * 10000   ~ 999999     10K ~ 999K    4 字符
+     * 1M      ~ 9.9M       1.0M ~ 9.9M   4 字符
+     * 10M     ~ 999M       10M ~ 999M    4 字符
+     * 1G      ~ 9.9G       1.0G ~ 9.9G   4 字符
+     * 10G+    ~            10G ~ 999G    4 字符
+     * </pre>
+     * 使用整数截断而非浮点四舍五入，避免跨级问题（如 9999 → 10.0K）。
+     */
+    private static String formatScale(long v) {
+        if (v >= 1_000_000_000L) {
+            long unit = v / 1_000_000_000L;
+            return unit < 10
+                    ? unit + "." + (v % 1_000_000_000L / 100_000_000L) + "G"
+                    : unit + "G";
+        } else if (v >= 1_000_000L) {
+            long unit = v / 1_000_000L;
+            return unit < 10
+                    ? unit + "." + (v % 1_000_000L / 100_000L) + "M"
+                    : unit + "M";
+        } else if (v >= 1000L) {
+            long unit = v / 1000L;
+            return unit < 10
+                    ? unit + "." + (v % 1000L / 100L) + "K"
+                    : unit + "K";
+        } else {
+            return DECIMAL_FORMAT.format(v);
+        }
+    }
+
+    @Override
+    protected void containerTick() {
+        counterTime += 1;
+        if (counterTime % 20 == 0 && maid != null) {
+            ClientPlayNetworking.send(RequestEffectMessage.ID, RequestEffectMessage.encode(maid.getId()));
+        }
+    }
+
+    public boolean isTaskListOpen() {
+        return TASK_LIST_OPEN;
+    }
+
+    private Rect2i getTaskListArea() {
+        return new Rect2i(leftPos - 93, topPos + 5, 92, 251);
+    }
+
+    // 获取女仆界面JERI屏蔽区域
+    public List<Rect2i> getExclusionArea() {
+        List<Rect2i> zones = new ArrayList<>();
+        // 侧边栏
+        zones.add(new Rect2i(leftPos + 251, topPos + 28 + 9, 21, 99));
+        // 任务列表
+        if (isTaskListOpen()) {
+            zones.add(getTaskListArea());
+        }
+        return zones;
+    }
+
+    @Override
+    public boolean mouseScrolled(double mouseX, double mouseY, double scrollY) {
+        if (TASK_LIST_OPEN && getTaskListArea().contains((int) mouseX, (int) mouseY)) {
+            if (scrollY > 0) {
+                // 向上滚，相当于点击 "Page Up"
+                taskPageUp();
+            } else {
+                // 向下滚，相当于点击 "Page Down"
+                taskPageDown();
+            }
+            return true;
+        }
+
+        return super.mouseScrolled(mouseX, mouseY, scrollY);
+    }
+
+    public EntityMaid getMaid() {
+        return maid;
+    }
+
+    private void renderTransTooltip(ImageButton button, PoseStack graphics, int x, int y, String key) {
+        if (button.isMouseOver(x, y)) {
+            MaidGui.componentTooltip(graphics, font, Collections.singletonList(new TranslatableComponent(key)), x, y);
+        }
+    }
+
+    @ApiStatus.AvailableSince("1.5.1")
+    public Map<String, AbstractWidget> getEventAddButtons() {
+        return eventAddButtons;
+    }
+
+    private void renderTransTooltip(StateSwitchingButton button, PoseStack graphics, int x, int y, String key) {
+        if (button.isMouseOver(x, y)) {
+            MaidGui.componentTooltip(graphics, font, Lists.newArrayList(
+                    new TranslatableComponent(key + "." + button.isStateTriggered()),
+                    new TranslatableComponent(key + ".desc")
+            ), x, y);
+        }
+    }
+
+    // 添加侧边栏按钮
+    @SuppressWarnings("unchecked")
+    private void addSideTabsButton() {
+        MaidSideTabs<T> maidTabs = new MaidSideTabs<>(maid.getId(), leftPos + 251, topPos + 28 + 9);
+        MaidSideTabButton[] tabs = maidTabs.getTabs(this);
+        for (MaidSideTabButton button : tabs) {
+            this.addRenderableWidget(button);
+        }
+    }
+
+    // 绘制侧边栏底部贴图
+    private void drawSideTabGui(PoseStack graphics, float partialTicks, int x, int y) {
+        MaidGui.texture(graphics, SIDE, leftPos + 251 + 5, topPos + 28 + 9, 235, 107, 21, 50);
+    }
+}

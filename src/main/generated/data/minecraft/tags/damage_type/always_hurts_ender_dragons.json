@@ -1,0 +1,11 @@
+{
+  "replace": false,
+  "values": [
+    "#minecraft:is_explosion",
+    "touhou_little_maid:danmaku_ender_killer",
+    {
+      "id": "tacz:bullet",
+      "required": false
+    }
+  ]
+}
