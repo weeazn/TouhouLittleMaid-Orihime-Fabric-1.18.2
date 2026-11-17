@@ -24,7 +24,7 @@ public class MaidPanicTask extends Behavior<EntityMaid> {
     }
 
     public static boolean canPanic(EntityMaid maid) {
-        return maid.getTask().enablePanic(maid);
+        return !maid.isSleeping() && maid.getTask().enablePanic(maid);
     }
 
     @Override

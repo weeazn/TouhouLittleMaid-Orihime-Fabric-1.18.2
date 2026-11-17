@@ -23,10 +23,8 @@ import net.minecraft.world.level.block.ChestBlock;
 import net.minecraft.world.level.block.entity.ChestBlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.ChestType;
-import net.minecraft.world.level.chunk.LevelChunk;
+import com.github.tartaricacid.touhoulittlemaid.util.NearbyBlockEntities;
 
-import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.List;
 import java.util.function.Predicate;
 
@@ -76,18 +74,8 @@ public final class BackpackDeposit {
     }
 
     public static List<BlockPos> nearby(ServerLevel level, BlockPos center, int radius) {
-        List<BlockPos> chests = new ArrayList<>();
-        for (int x = (center.getX()-radius) >> 4; x <= (center.getX()+radius) >> 4; x++) {
-            for (int z = (center.getZ()-radius) >> 4; z <= (center.getZ()+radius) >> 4; z++) {
-                LevelChunk chunk = level.getChunkSource().getChunkNow(x, z);
-                if (chunk == null) continue;
-                chunk.getBlockEntities().forEach((pos, entity) -> {
-                    if (pos.distSqr(center) <= radius * radius && (entity instanceof ChestBlockEntity || entity.getBlockState().is(DEPOSIT_CONTAINERS))) chests.add(pos);
-                });
-            }
-        }
-        chests.sort(Comparator.comparingDouble(pos -> pos.distSqr(center)));
-        return chests;
+        return NearbyBlockEntities.find(level, center, radius,
+                entity -> entity instanceof ChestBlockEntity || entity.getBlockState().is(DEPOSIT_CONTAINERS));
     }
 
     public static BlockPos nearest(ServerLevel level, BlockPos center, int radius, IItemHandlerModifiable cargo,

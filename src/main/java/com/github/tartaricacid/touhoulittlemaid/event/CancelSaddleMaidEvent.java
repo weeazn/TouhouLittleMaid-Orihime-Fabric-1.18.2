@@ -11,9 +11,9 @@ import net.minecraft.world.level.Level;
 public class CancelSaddleMaidEvent {
     public static InteractionResultHolder<ItemStack> onItemRightClick(Player player, Level world, InteractionHand hand) {
         ItemStack itemStack = player.getItemInHand(hand);
-        if (player.getFirstPassenger() instanceof EntityMaid && itemStack.is(Items.SADDLE)) {
-            player.ejectPassengers();
-            return InteractionResultHolder.fail(itemStack);
+        if (player.getFirstPassenger() instanceof EntityMaid maid && itemStack.is(Items.SADDLE)) {
+            if (!world.isClientSide) maid.stopRiding();
+            return InteractionResultHolder.sidedSuccess(itemStack, world.isClientSide);
         }
         return InteractionResultHolder.pass(itemStack);
     }

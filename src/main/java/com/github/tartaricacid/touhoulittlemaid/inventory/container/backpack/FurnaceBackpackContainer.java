@@ -4,6 +4,9 @@ import com.github.tartaricacid.touhoulittlemaid.entity.backpack.data.FurnaceBack
 import com.github.tartaricacid.touhoulittlemaid.entity.passive.EntityMaid;
 import com.github.tartaricacid.touhoulittlemaid.inventory.container.MaidMainContainer;
 import net.fabricmc.fabric.api.registry.FuelRegistry;
+import net.fabricmc.loader.api.FabricLoader;
+import com.github.tartaricacid.touhoulittlemaid.compat.furnaces.FurnaceUpgrade;
+import net.minecraft.world.entity.player.Player;
 import net.fabricmc.fabric.api.screenhandler.v1.ExtendedScreenHandlerType;
 import net.minecraft.world.Container;
 import net.minecraft.world.entity.player.Inventory;
@@ -19,6 +22,7 @@ public class FurnaceBackpackContainer extends MaidMainContainer {
             (id, inv, data) -> new FurnaceBackpackContainer(id, inv, data.readInt())
     );
     private final ContainerData data;
+    public final Slot upgradeSlot;
 
     public FurnaceBackpackContainer(int id, Inventory inventory, int entityId) {
         super(TYPE, id, inventory, entityId);
@@ -37,6 +41,11 @@ public class FurnaceBackpackContainer extends MaidMainContainer {
         });
         this.addSlot(new FurnaceBackpackFuelSlot(this, furnaceData, 1, 161, 142));
         this.addSlot(new FurnaceResultSlot(inventory.player, furnaceData, 2, 221, 121));
+        upgradeSlot = FabricLoader.getInstance().isModLoaded("fabric-furnaces")
+                ? addSlot(new Slot(furnaceData, FurnaceBackpackData.UPGRADE_INDEX, 138, 122) {
+                    @Override public boolean mayPlace(ItemStack stack) { return FurnaceUpgrade.of(stack) != null; }
+                    @Override public int getMaxStackSize() { return 1; }
+                }) : null;
         this.addDataSlots(this.data);
     }
 
@@ -48,6 +57,21 @@ public class FurnaceBackpackContainer extends MaidMainContainer {
         for (int i = 0; i < 6; i++) {
             addSlot(new BackpackSlot(maid, 12 + i, 143 + 18 * i, 75));
         }
+    }
+
+    @Override
+    public ItemStack quickMoveStack(Player player, int index) {
+        Slot source = slots.get(index);
+        ItemStack stack = source.getItem();
+        if (index < PLAYER_INVENTORY_SIZE && upgradeSlot != null && upgradeSlot.mayPlace(stack)) {
+            if (upgradeSlot.hasItem()) return ItemStack.EMPTY;
+            ItemStack original = stack.copy();
+            upgradeSlot.set(source.remove(1));
+            source.setChanged();
+            source.onTake(player, stack);
+            return original;
+        }
+        return super.quickMoveStack(player, index);
     }
 
     private boolean isFuel(ItemStack stack) {

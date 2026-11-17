@@ -1,4 +1,8 @@
 {
+  "task.touhou_little_maid.smelt": "烧炼",
+  "task.touhou_little_maid.smelt.desc": "将背包里的原料和燃料送到附近的熔炉，取回成品。支持 Fabric Furnaces 升级熔炉。",
+  "button.touhou_little_maid.maid.mode.smelt": "烧炼",
+  "gui.touhou_little_maid.furnace_upgrade": "放入升级熔炉，改变背包的烧炼性能",
   "config.touhou_little_maid.maid.level_cost": "升到 %s 级所需的额外好感",
   "config.touhou_little_maid.maid.level_health": "升到 %s 级增加的生命上限（2 点为一颗心）",
   "config.touhou_little_maid.misc.modded_power_chests": "在模组遗迹宝箱中生成 P 点",

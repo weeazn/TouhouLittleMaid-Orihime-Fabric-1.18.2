@@ -56,6 +56,8 @@ import com.github.tartaricacid.touhoulittlemaid.entity.item.EntityPowerPoint;
 import com.github.tartaricacid.touhoulittlemaid.entity.item.EntityTombstone;
 import com.github.tartaricacid.touhoulittlemaid.entity.projectile.MaidFishingHook;
 import com.github.tartaricacid.touhoulittlemaid.entity.task.TaskIdle;
+import com.github.tartaricacid.touhoulittlemaid.entity.task.TaskBowAttack;
+import com.github.tartaricacid.touhoulittlemaid.entity.task.TaskDanmakuAttack;
 import com.github.tartaricacid.touhoulittlemaid.entity.task.TaskManager;
 import com.github.tartaricacid.touhoulittlemaid.init.*;
 import com.github.tartaricacid.touhoulittlemaid.inventory.container.AbstractMaidContainer;
@@ -102,6 +104,7 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.network.protocol.game.ClientboundSetPassengersPacket;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.tags.TagKey;
@@ -648,7 +651,27 @@ public class EntityMaid extends TamableAnimal implements CrossbowAttackMob, IMai
     }
 
     @Override
+    public boolean startRiding(Entity vehicle, boolean force) {
+        boolean mounted = super.startRiding(vehicle, force);
+        // Vanilla broadcasts the passenger list to trackers, which excludes the carrier's own client.
+        if (mounted && vehicle instanceof ServerPlayer carrier) {
+            carrier.connection.send(new ClientboundSetPassengersPacket(carrier));
+        }
+        return mounted;
+    }
+
+    @Override
+    public void removeVehicle() {
+        Entity previous = getVehicle();
+        super.removeVehicle();
+        if (previous instanceof ServerPlayer carrier && getVehicle() != previous) {
+            carrier.connection.send(new ClientboundSetPassengersPacket(carrier));
+        }
+    }
+
+    @Override
     public InteractionResult mobInteract(Player playerIn, InteractionHand hand) {
+        if (isSleeping()) return InteractionResult.PASS;
         // 禁止 fake player 交互女仆
         if (!level.isClientSide && (!(playerIn instanceof ServerPlayer player) ||
                 player.getServer().getPlayerList().getPlayer(player.getUUID()) != player)) {
@@ -967,6 +990,7 @@ public class EntityMaid extends TamableAnimal implements CrossbowAttackMob, IMai
 
     @Override
     public boolean hurt(DamageSource source, float amount) {
+        if (isSleeping() && source.getEntity() instanceof Mob) return false;
         MaidAttackEvent event = new MaidAttackEvent(this, source, amount);
         MaidAttackEvent.CALLBACK.invoker().post(event);
         if (event.isCanceled()) {
@@ -1229,7 +1253,14 @@ public class EntityMaid extends TamableAnimal implements CrossbowAttackMob, IMai
     }
 
     @Override
+    public boolean canBeSeenAsEnemy() {
+        return !isSleeping() && super.canBeSeenAsEnemy();
+    }
+
+    @Override
     public boolean canAttack(LivingEntity target) {
+        if (isSleeping() || (TagEntity.isCreeper(target) && !(getTask() instanceof TaskBowAttack)
+                && !(getTask() instanceof TaskDanmakuAttack))) return false;
         if (this.getTask() instanceof IAttackTask attackTask) {
             return target != this && target.level == this.level && super.canAttack(target)
                     && !isAlliedTo(target) && attackTask.canAttack(this, target);
@@ -1516,7 +1547,8 @@ public class EntityMaid extends TamableAnimal implements CrossbowAttackMob, IMai
     }
 
     public boolean openMaidGui(Player player, int tabIndex) {
-        if (player instanceof ServerPlayer serverPlayer && !this.isSleeping()) {
+        if (isSleeping()) return false;
+        if (player instanceof ServerPlayer serverPlayer) {
             this.navigation.stop();
             MenuProvider guiProvider = getGuiProvider(tabIndex);
             if (guiProvider != null && serverPlayer.containerMenu instanceof AbstractMaidContainer current

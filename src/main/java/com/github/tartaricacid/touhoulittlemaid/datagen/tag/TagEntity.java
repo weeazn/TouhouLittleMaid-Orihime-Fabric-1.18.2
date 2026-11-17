@@ -37,6 +37,12 @@ public class TagEntity extends FabricTagProvider<EntityType<?>> {
             new ResourceLocation("iceandfire:immune_to_gorgon_stone")
     );
 
+    public static final TagKey<EntityType<?>> CREEPERS = createTagKey("creepers");
+
+    public static boolean isCreeper(net.minecraft.world.entity.LivingEntity entity) {
+        return entity instanceof net.minecraft.world.entity.monster.Creeper || entity.getType().is(CREEPERS);
+    }
+
     public TagEntity(FabricDataGenerator output) {
         super(output, Registry.ENTITY_TYPE, "Entity Type Tags");
     }
@@ -56,6 +62,8 @@ public class TagEntity extends FabricTagProvider<EntityType<?>> {
         getOrCreateTagBuilder(EntityTypeTags.FREEZE_IMMUNE_ENTITY_TYPES).add(InitEntities.FAIRY);
         getOrCreateTagBuilder(net.minecraft.tags.TagKey.create(net.minecraft.core.Registry.ENTITY_TYPE_REGISTRY, new net.minecraft.resources.ResourceLocation("minecraft", "fall_damage_immune"))).add(InitEntities.FAIRY);
 
+        getOrCreateTagBuilder(CREEPERS).add(EntityType.CREEPER)
+                .addOptionalTag(id("c:creepers")).addOptionalTag(id("forge:creepers"));
         getOrCreateTagBuilder(MAID_FAIRY_ATTACK_GOAL).add(EntityType.IRON_GOLEM, InitEntities.MAID)
                 .addOptional(id("guardvillagers:guard"))
                 .addOptional(id("earthtojavamobs:furnace_golem"))

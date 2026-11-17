@@ -3,17 +3,15 @@ package com.github.tartaricacid.touhoulittlemaid.entity.backpack.data;
 import com.github.tartaricacid.touhoulittlemaid.api.backpack.IBackpackData;
 import com.github.tartaricacid.touhoulittlemaid.entity.passive.EntityMaid;
 import net.fabricmc.fabric.api.registry.FuelRegistry;
-import net.minecraft.core.RegistryAccess;
+import com.github.tartaricacid.touhoulittlemaid.compat.furnaces.FurnaceUpgrade;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.util.Mth;
-import net.minecraft.world.Container;
 import net.minecraft.world.SimpleContainer;
 import net.minecraft.world.inventory.ContainerData;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.item.crafting.AbstractCookingRecipe;
-import net.minecraft.world.item.crafting.RecipeManager;
 import net.minecraft.world.item.crafting.RecipeType;
 import net.minecraft.world.item.crafting.SmeltingRecipe;
 import net.minecraft.world.level.Level;
@@ -24,6 +22,9 @@ public class FurnaceBackpackData extends SimpleContainer implements IBackpackDat
     private static final int INPUT_INDEX = 0;
     private static final int FUEL_INDEX = 1;
     private static final int OUTPUT_INDEX = 2;
+    public static final int UPGRADE_INDEX = 3;
+    private double fuelModifier = 1;
+    private double speedModifier = 1;
     private int litTime;
     private int litDuration;
     private int cookingProgress;
@@ -58,7 +59,7 @@ public class FurnaceBackpackData extends SimpleContainer implements IBackpackDat
     };
 
     public FurnaceBackpackData(EntityMaid maid) {
-        super(3);
+        super(4);
         this.level = maid.level;
     }
 
@@ -74,7 +75,7 @@ public class FurnaceBackpackData extends SimpleContainer implements IBackpackDat
         if (!items.isEmpty() && !items.getCompound(0).contains("Slot", Tag.TAG_ANY_NUMERIC)) {
             // Older saves used SimpleContainer's compact list without slot indices.
             int count = items.size();
-            if (count < getContainerSize()) {
+            if (count < UPGRADE_INDEX) {
                 ItemStack last = ItemStack.of(items.getCompound(count - 1));
                 if (getBurnDuration(last) == 0 && level.getRecipeManager().getRecipeFor(
                         RecipeType.SMELTING, new SimpleContainer(last), level).isEmpty()
@@ -91,7 +92,7 @@ public class FurnaceBackpackData extends SimpleContainer implements IBackpackDat
                     }
                 }
             }
-            for (int i = 0; i < Math.min(count, getContainerSize()); i++) {
+            for (int i = 0; i < Math.min(count, UPGRADE_INDEX); i++) {
                 super.setItem(i, ItemStack.of(items.getCompound(i)));
             }
         } else {
@@ -101,6 +102,8 @@ public class FurnaceBackpackData extends SimpleContainer implements IBackpackDat
                 if (slot < getContainerSize()) super.setItem(slot, ItemStack.of(entry));
             }
         }
+        this.fuelModifier = tag.contains("FuelModifier") ? tag.getDouble("FuelModifier") : 1;
+        this.speedModifier = tag.contains("SpeedModifier") ? tag.getDouble("SpeedModifier") : 1;
         this.litTime = tag.getInt("BurnTime");
         this.cookingProgress = tag.getInt("CookTime");
         this.cookingTotalTime = tag.getInt("CookTimeTotal");
@@ -110,6 +113,8 @@ public class FurnaceBackpackData extends SimpleContainer implements IBackpackDat
 
     @Override
     public void save(CompoundTag tag, EntityMaid maid) {
+        tag.putDouble("FuelModifier", fuelModifier);
+        tag.putDouble("SpeedModifier", speedModifier);
         tag.putInt("BurnTime", this.litTime);
         tag.putInt("CookTime", this.cookingProgress);
         tag.putInt("CookTimeTotal", this.cookingTotalTime);
@@ -127,6 +132,19 @@ public class FurnaceBackpackData extends SimpleContainer implements IBackpackDat
     @Override
     public void serverTick(EntityMaid maid) {
         Level level = maid.getLevel();
+        FurnaceUpgrade upgrade = FurnaceUpgrade.of(getItem(UPGRADE_INDEX));
+        double newSpeed = upgrade == null ? 1 : upgrade.getSpeedModifier();
+        double newFuel = upgrade == null ? 1 : upgrade.getFuelModifier();
+        if (newFuel > 0 && newFuel != fuelModifier) {
+            litTime = (int) (litTime * fuelModifier / newFuel);
+            litDuration = (int) (litDuration * fuelModifier / newFuel);
+            fuelModifier = newFuel;
+        }
+        if (newSpeed > 0 && newSpeed != speedModifier) {
+            speedModifier = newSpeed;
+            cookingTotalTime = getTotalCookTime(level);
+            cookingProgress = 0;
+        }
         // 如果是燃烧状态，继续燃烧
         if (this.isLit()) {
             --this.litTime;
@@ -145,7 +163,7 @@ public class FurnaceBackpackData extends SimpleContainer implements IBackpackDat
 
             int maxStackSize = this.getMaxStackSize();
             // 没有燃烧，但是可以燃！
-            if (!this.isLit() && this.canBurn(level.registryAccess(), recipe, this, maxStackSize)) {
+            if (!this.isLit() && this.canBurn(recipe, maxStackSize)) {
                 this.litTime = this.getBurnDuration(fuelItem);
                 this.litDuration = this.litTime;
                 // 如果此时点燃了
@@ -164,15 +182,15 @@ public class FurnaceBackpackData extends SimpleContainer implements IBackpackDat
             }
 
             // 点燃了，而且也能燃！
-            if (this.isLit() && this.canBurn(level.registryAccess(), recipe, this, maxStackSize)) {
+            if (this.isLit() && this.canBurn(recipe, maxStackSize)) {
                 // 各种进度增加
                 ++this.cookingProgress;
                 // 如果进度满了，重置，并给出产物
-                if (this.cookingProgress == this.cookingTotalTime) {
+                if (this.cookingProgress >= this.cookingTotalTime) {
                     this.cookingProgress = 0;
                     this.cookingTotalTime = getTotalCookTime(level);
                     // 如果烧制成功，把经验给女仆
-                    if (this.burn(level.registryAccess(), recipe, this, maxStackSize)) {
+                    if (this.burn(recipe, maxStackSize, upgrade)) {
                         int exp = this.createExperience(recipe.getExperience());
                         maid.setExperience(maid.getExperience() + exp);
                     }
@@ -217,56 +235,30 @@ public class FurnaceBackpackData extends SimpleContainer implements IBackpackDat
         } else {
             //return fuel.getBurnTime(RecipeType.SMELTING);
             Integer burnTime = FuelRegistry.INSTANCE.get(fuel.getItem());
-            return burnTime == null ? 0 : burnTime;
+            return burnTime == null ? 0 : (int) (burnTime / fuelModifier);
         }
     }
 
-    private boolean canBurn(RegistryAccess access, @Nullable SmeltingRecipe recipe, SimpleContainer container, int maxStackSize) {
-        // 先检查输入物品和配方
-        if (!container.getItem(INPUT_INDEX).isEmpty() && recipe != null) {
-            // 先检查配方结果
-            ItemStack result = recipe.assemble(this);
-            // 没结果，不能燃烧
-            if (result.isEmpty()) {
-                return false;
-            } else {
-                // 检查输出栏
-                ItemStack output = container.getItem(OUTPUT_INDEX);
-                if (output.isEmpty()) {
-                    // 空的，可以放
-                    return true;
-                } else if (!ItemStack.isSame(output, result)) {
-                    // 不同物品，不行
-                    return false;
-                } else if (output.getCount() + result.getCount() <= maxStackSize && output.getCount() + result.getCount() <= output.getMaxStackSize()) {
-                    // Forge fix: make furnace respect stack sizes in furnace recipes
-                    return true;
-                } else {
-                    // Forge fix: make furnace respect stack sizes in furnace recipes
-                    return output.getCount() + result.getCount() <= result.getMaxStackSize();
-                }
-            }
-        } else {
-            return false;
-        }
+    private boolean canBurn(@Nullable SmeltingRecipe recipe, int maxStackSize) {
+        if (recipe == null || getItem(INPUT_INDEX).isEmpty()) return false;
+        ItemStack result = recipe.assemble(this);
+        ItemStack output = getItem(OUTPUT_INDEX);
+        return !result.isEmpty() && (output.isEmpty() || ItemStack.isSameItemSameTags(output, result))
+                && output.getCount() + result.getCount() <= Math.min(maxStackSize, result.getMaxStackSize());
     }
 
-    private boolean burn(RegistryAccess access, @Nullable SmeltingRecipe recipe, SimpleContainer container, int maxStackSize) {
-        if (recipe != null && this.canBurn(access, recipe, container, maxStackSize)) {
-            ItemStack input = container.getItem(INPUT_INDEX);
-            ItemStack result = recipe.assemble(this);
-            ItemStack output = container.getItem(OUTPUT_INDEX);
-            // 如果输出栏为空
-            if (output.isEmpty()) {
-                // 放东西
-                container.setItem(OUTPUT_INDEX, result.copy());
-            } else if (output.is(result.getItem())) {
-                // 相同物品，增长数量即可
-                output.grow(result.getCount());
-            }
+    private boolean burn(@Nullable SmeltingRecipe recipe, int maxStackSize, @Nullable FurnaceUpgrade upgrade) {
+        if (this.canBurn(recipe, maxStackSize)) {
+            ItemStack input = getItem(INPUT_INDEX);
+            ItemStack result = recipe.assemble(this).copy();
+            ItemStack output = getItem(OUTPUT_INDEX);
+            if (upgrade != null && output.getCount() + result.getCount() < Math.min(maxStackSize, result.getMaxStackSize())
+                    && level.random.nextInt(100) < upgrade.getDuplicationChance()) result.grow(1);
+            if (output.isEmpty()) setItem(OUTPUT_INDEX, result);
+            else output.grow(result.getCount());
             // 如果是海绵和桶
-            if (input.is(Blocks.WET_SPONGE.asItem()) && !container.getItem(FUEL_INDEX).isEmpty() && container.getItem(FUEL_INDEX).is(Items.BUCKET)) {
-                container.setItem(FUEL_INDEX, new ItemStack(Items.WATER_BUCKET));
+            if (input.is(Blocks.WET_SPONGE.asItem()) && !getItem(FUEL_INDEX).isEmpty() && getItem(FUEL_INDEX).is(Items.BUCKET)) {
+                setItem(FUEL_INDEX, new ItemStack(Items.WATER_BUCKET));
             }
             input.shrink(1);
             return true;
@@ -276,6 +268,7 @@ public class FurnaceBackpackData extends SimpleContainer implements IBackpackDat
     }
 
     private int getTotalCookTime(Level level) {
-        return level.getRecipeManager().getRecipeFor(RecipeType.SMELTING, this, level).map(AbstractCookingRecipe::getCookingTime).orElse(200);
+        int base = level.getRecipeManager().getRecipeFor(RecipeType.SMELTING, this, level).map(AbstractCookingRecipe::getCookingTime).orElse(200);
+        return Math.max(1, (int) (base / speedModifier));
     }
 }

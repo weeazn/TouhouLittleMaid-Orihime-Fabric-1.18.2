@@ -43,11 +43,22 @@ public class FurnaceBackpackContainerScreen extends AbstractMaidContainerGui<Fur
     }
 
     @Override
+    protected void renderAdditionTransTooltip(PoseStack graphics, int mouseX, int mouseY) {
+        if (menu.upgradeSlot != null && hoveredSlot == menu.upgradeSlot && !menu.upgradeSlot.hasItem()) {
+            renderTooltip(graphics, new net.minecraft.network.chat.TranslatableComponent("gui.touhou_little_maid.furnace_upgrade"), mouseX, mouseY);
+        }
+    }
+
+    @Override
     protected void renderBg(PoseStack graphics, float partialTicks, int x, int y) {
         super.renderBg(graphics, partialTicks, x, y);
         RenderSystem.setShader(GameRenderer::getPositionTexShader);
         RenderSystem.setShaderTexture(0, BACKPACK);
         MaidGui.texture(graphics, BACKPACK, leftPos + 85, topPos + 36, 0, 0, 165, 128);
+        if (menu.upgradeSlot != null) {
+            MaidGui.texture(graphics, BACKPACK, leftPos + menu.upgradeSlot.x - 1, topPos + menu.upgradeSlot.y - 1,
+                    56, 20, 18, 18);
+        }
         if (this.menu.isLit()) {
             int litProgress = this.menu.getLitProgress();
             MaidGui.texture(graphics, BACKPACK, leftPos + 161, topPos + 122 + 12 - litProgress, 165, 12 - litProgress, 14, litProgress + 1);

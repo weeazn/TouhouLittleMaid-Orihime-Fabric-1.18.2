@@ -1,4 +1,8 @@
 {
+  "task.touhou_little_maid.smelt": "Smelting",
+  "task.touhou_little_maid.smelt.desc": "Supply nearby furnaces with ingredients and fuel from the maid inventory and collect the results. Supports Fabric Furnaces.",
+  "button.touhou_little_maid.maid.mode.smelt": "Smelting",
+  "gui.touhou_little_maid.furnace_upgrade": "Insert a Fabric Furnaces block to upgrade this backpack",
   "config.touhou_little_maid.maid.level_cost": "Extra favor needed for level %s",
   "config.touhou_little_maid.maid.level_health": "Max HP gained at level %s",
   "config.touhou_little_maid.misc.modded_power_chests": "P items in modded structure chests",

@@ -7,7 +7,6 @@ import com.github.tartaricacid.touhoulittlemaid.entity.passive.EntityMaid;
 import com.github.tartaricacid.touhoulittlemaid.init.InitTrigger;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
-import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.client.Minecraft;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
@@ -20,28 +19,20 @@ public class SaddleMaidEvent {
         Player player = event.getPlayer();
         EntityMaid maid = event.getMaid();
         ItemStack stack = event.getStack();
-        if (stack.is(Items.SADDLE)) {
-            if (player.getPassengers().isEmpty() && maid.getPassengers().isEmpty()) {
-                // FIXME 抱起后概率导致女仆留在原地悬空
-                boolean success = maid.startRiding(player);
-                if (success) {
-                    if (maid.isHomeModeEnable()) {
-                        maid.setHomeModeEnable(false);
-                    }
-                    if (FabricLoader.getInstance().getEnvironmentType() == EnvType.CLIENT) {
-                        SaddleMaidEvent.showTips();
-                    }
-                    if (player instanceof ServerPlayer serverPlayer) {
-                        InitTrigger.MAID_EVENT.trigger(serverPlayer, TriggerType.PICKUP_MAID);
-                    }
+        if (!stack.is(Items.SADDLE)) return;
+        if (player.getFirstPassenger() instanceof EntityMaid held) {
+            if (!player.level.isClientSide) held.stopRiding();
+            event.setCanceled(true);
+        } else if (player.getPassengers().isEmpty() && maid.getPassengers().isEmpty()) {
+            if (player.level.isClientSide) {
+                showTips();
+            } else if (maid.startRiding(player)) {
+                if (maid.isHomeModeEnable()) maid.setHomeModeEnable(false);
+                if (player instanceof ServerPlayer serverPlayer) {
+                    InitTrigger.MAID_EVENT.trigger(serverPlayer, TriggerType.PICKUP_MAID);
                 }
-                event.setCanceled(true);
-                return;
             }
-            if (!player.getPassengers().isEmpty()) {
-                player.ejectPassengers();
-                event.setCanceled(true);
-            }
+            event.setCanceled(true);
         }
     }
 

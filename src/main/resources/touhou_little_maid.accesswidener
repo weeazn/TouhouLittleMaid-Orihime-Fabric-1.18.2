@@ -66,3 +66,6 @@ accessible method net/minecraft/world/entity/ai/memory/MemoryModuleType <init> (
 accessible method net/minecraft/world/entity/ai/sensing/SensorType <init> (Ljava/util/function/Supplier;)V
 accessible method net/minecraft/world/entity/projectile/Projectile <init> (Lnet/minecraft/world/entity/EntityType;Lnet/minecraft/world/level/Level;)V
 accessible method net/minecraft/world/entity/schedule/Activity <init> (Ljava/lang/String;)V
+
+accessible field net/minecraft/world/entity/ai/goal/AvoidEntityGoal avoidEntityTargeting Lnet/minecraft/world/entity/ai/targeting/TargetingConditions;
+mutable field net/minecraft/world/entity/ai/goal/AvoidEntityGoal avoidEntityTargeting Lnet/minecraft/world/entity/ai/targeting/TargetingConditions;

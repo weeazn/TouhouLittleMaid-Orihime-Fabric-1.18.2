@@ -15,7 +15,9 @@ import net.minecraft.world.entity.ai.goal.AvoidEntityGoal;
 import net.minecraft.world.entity.ai.goal.GoalSelector;
 import net.minecraft.world.entity.ai.goal.TemptGoal;
 import net.minecraft.world.entity.animal.Animal;
-import net.minecraft.world.entity.monster.Creeper;
+import net.minecraft.world.entity.PathfinderMob;
+import net.minecraft.world.entity.ai.targeting.TargetingConditions;
+import com.github.tartaricacid.touhoulittlemaid.datagen.tag.TagEntity;
 
 import java.util.List;
 
@@ -23,16 +25,28 @@ import static com.github.tartaricacid.touhoulittlemaid.init.InitDataAttachment.P
 
 public class EntityJoinWorldEvent {
     public static void onCreeperJoinWorld(EntityJoinLevelEvent event) {
-        if (event.getEntity() instanceof Creeper creeper) {
-            ((MobAccessor) creeper).tlm$goalSelector().addGoal(1, new AvoidEntityGoal<>(creeper, EntityMaid.class, 6, 1, 1.2));
+        if (!event.getEntity().level.isClientSide && event.getEntity() instanceof PathfinderMob mob && TagEntity.isCreeper(mob)) {
+            GoalSelector goals = ((MobAccessor) mob).tlm$goalSelector();
+            if (goals.getAvailableGoals().stream().noneMatch(g -> g.getGoal() instanceof AvoidMaidGoal)) {
+                goals.addGoal(1, new AvoidMaidGoal(mob));
+            }
+        }
+    }
+
+    private static final class AvoidMaidGoal extends AvoidEntityGoal<EntityMaid> {
+        AvoidMaidGoal(PathfinderMob mob) {
+            super(mob, EntityMaid.class, 6, 1, 1.2);
+            // Avoidance also applies to sleeping maids, who cannot be selected for combat.
+            this.avoidEntityTargeting = TargetingConditions.forNonCombat().range(6);
         }
     }
 
     public static void onAnimalJoinWorld(EntityJoinLevelEvent event) {
-        if (event.getEntity() instanceof Animal animal) {
+        if (!event.getEntity().level.isClientSide && event.getEntity() instanceof Animal animal) {
             GoalSelector goalSelector = ((MobAccessor) animal).tlm$goalSelector();
             // 先复制一遍进行遍历，避免出现 ConcurrentModificationException
             var goals = List.copyOf(goalSelector.getAvailableGoals());
+            if (goals.stream().anyMatch(g -> g.getGoal() instanceof MaidTemptGoal)) return;
             goals.stream().filter(goal -> goal.getGoal() instanceof TemptGoal).findFirst().ifPresent(g -> {
                 if (g.getGoal() instanceof TemptGoal temptGoal) {
                     MaidTemptGoal maidTemptGoal = new MaidTemptGoal(temptGoal.mob, temptGoal.speedModifier, ((TempGoalAccessor) temptGoal).tlm$getItems(), temptGoal.canScare);
